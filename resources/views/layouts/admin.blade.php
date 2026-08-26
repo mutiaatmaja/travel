@@ -101,8 +101,8 @@
                             <path d="m6 9 6 6 6-6" />
                         </svg></button>
                     <div x-show="masterOpen" class="ml-5 border-l border-slate-200 pl-4">
-                        @foreach ([['label' => 'Users', 'href' => route('users')], ['label' => 'Role & Permission', 'href' => route('roles-permissions')], ['label' => 'Wilayah', 'href' => '#'], ['label' => 'Outlet', 'href' => '#'], ['label' => 'Armada', 'href' => '#'], ['label' => 'Supir', 'href' => '#'], ['label' => 'Rute', 'href' => '#'], ['label' => 'Jadwal', 'href' => '#']] as $menu)
-                            <a href="{{ $menu['href'] }}" @if (in_array($menu['label'], ['Users', 'Role & Permission'], true)) wire:navigate @endif
+                        @foreach ([['label' => 'Users', 'href' => route('users')], ['label' => 'Role & Permission', 'href' => route('roles-permissions')], ['label' => 'Wilayah', 'href' => route('cities')], ['label' => 'Outlet', 'href' => route('outlets')], ['label' => 'Armada', 'href' => route('vehicles')], ['label' => 'Supir', 'href' => route('drivers')], ['label' => 'Rute', 'href' => route('routes')], ['label' => 'Jadwal', 'href' => route('trips')]] as $menu)
+                            <a href="{{ $menu['href'] }}" wire:navigate
                                 class="block rounded-lg px-3 py-2 text-sm {{ $menu['label'] === $title ? 'bg-brand-50 font-bold text-brand-700' : 'text-slate-500 hover:bg-brand-50 hover:text-brand-600' }}">{{ $menu['label'] }}</a>
                         @endforeach
                     </div>
@@ -157,8 +157,6 @@
             <main class="mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">{{ $slot }}</main>
         </div>
     </div>
-
-    {{ $slot }}
 
     @livewireScripts
 </body>
