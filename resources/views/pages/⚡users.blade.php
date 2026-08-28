@@ -7,13 +7,11 @@ use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
 
-new #[Layout('layouts::admin')] class extends Component
-{
+new #[Layout('layouts::admin')] class extends Component {
     use WithPagination;
     public string $title = 'Users';
 
     public string $section = 'Master Data';
-
 
     public string $search = '';
     public bool $modalOpen = false;

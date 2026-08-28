@@ -44,6 +44,24 @@
         [x-cloak] {
             display: none !important;
         }
+
+        .admin-sidebar-scroll {
+            scrollbar-color: #cbd5e1 transparent;
+            scrollbar-width: auto;
+        }
+
+        .admin-sidebar-scroll::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .admin-sidebar-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+
+        .admin-sidebar-scroll::-webkit-scrollbar-track {
+            background: #f8fafc;
+        }
     </style>
 
     <script>
@@ -52,7 +70,7 @@
             Alpine.store('sidebar', {
                 open: false,
                 masterOpen: true,
-                paketOpen: false,
+                paketOpen: true,
             });
         });
     </script>
@@ -72,7 +90,7 @@
         </div>
 
         <aside
-            class="fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-slate-200 bg-white transition-transform duration-300 lg:translate-x-0"
+            class="fixed inset-y-0 left-0 z-50 flex h-screen w-72 flex-col overflow-hidden border-r border-slate-200 bg-white transition-transform duration-300 lg:translate-x-0"
             :class="$store.sidebar.open ? 'translate-x-0' : '-translate-x-full'">
             <div class="flex h-20 items-center justify-between border-b border-slate-100 px-6">
                 <a href="{{ route('home') }}" wire:navigate class="flex items-center gap-2">
@@ -91,7 +109,8 @@
             </div>
 
             @persist('admin-sidebar-nav')
-                <nav class="flex-1 overflow-y-auto overscroll-contain px-4 py-6">
+                <nav
+                    class="admin-sidebar-scroll h-[calc(100vh-8rem)] min-h-0 flex-none overflow-y-scroll overscroll-contain px-4 py-6">
                     <p class="px-3 text-[11px] font-bold uppercase tracking-widest text-slate-400">Menu utama</p>
                     <div class="mt-3 space-y-1">
                         <a href="{{ route('dashboard') }}" wire:navigate
@@ -183,7 +202,7 @@
                     </svg><span wire:loading.remove wire:target="logout">Keluar</span><span wire:loading
                         wire:target="logout">Keluar...</span></button>
             </header>
-            <main class="mx-auto w-full max-w-7xl flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 lg:p-8">
+            <main class="mx-auto min-h-0 w-full max-w-7xl flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 lg:p-8">
                 {{ $slot }}</main>
         </div>
     </div>
