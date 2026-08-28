@@ -46,23 +46,34 @@
         }
     </style>
 
+    <script>
+        // Registered once; state then survives Livewire's SPA-style page navigations.
+        document.addEventListener('alpine:init', () => {
+            Alpine.store('sidebar', {
+                open: false,
+                masterOpen: true,
+                paketOpen: false,
+            });
+        });
+    </script>
+
     @livewireStyles
 </head>
 
-<body class="min-h-screen bg-white font-sans text-slate-800 antialiased">
+<body class="h-screen overflow-hidden bg-white font-sans text-slate-800 antialiased">
     @props([
         'title' => $title ?? 'Dashboard',
         'section' => $section ?? 'Overview',
     ])
 
-    <div x-data="{ sidebarOpen: false, masterOpen: true }" class="min-h-screen bg-slate-50">
-        <div x-show="sidebarOpen" x-cloak @click="sidebarOpen = false"
+    <div x-data class="h-screen bg-slate-50">
+        <div x-show="$store.sidebar.open" x-cloak @click="$store.sidebar.open = false"
             class="fixed inset-0 z-40 bg-slate-900/40 lg:hidden">
         </div>
 
         <aside
             class="fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-slate-200 bg-white transition-transform duration-300 lg:translate-x-0"
-            :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'">
+            :class="$store.sidebar.open ? 'translate-x-0' : '-translate-x-full'">
             <div class="flex h-20 items-center justify-between border-b border-slate-100 px-6">
                 <a href="{{ route('home') }}" wire:navigate class="flex items-center gap-2">
                     <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-500 text-white"><svg
@@ -72,38 +83,56 @@
                     <span class="text-lg font-extrabold tracking-tight text-slate-900">Trans<span
                             class="text-brand-500">Go</span></span>
                 </a>
-                <button type="button" @click="sidebarOpen = false"
+                <button type="button" @click="$store.sidebar.open = false"
                     class="rounded-lg p-2 text-slate-400 hover:bg-slate-50 lg:hidden" aria-label="Tutup sidebar"><svg
                         class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M6 6l12 12M18 6L6 18" />
                     </svg></button>
             </div>
 
-            <nav class="flex-1 overflow-y-auto px-4 py-6">
+            @persist('admin-sidebar-nav')
+            <nav class="flex-1 overflow-y-auto overscroll-contain px-4 py-6">
                 <p class="px-3 text-[11px] font-bold uppercase tracking-widest text-slate-400">Menu utama</p>
                 <div class="mt-3 space-y-1">
                     <a href="{{ route('dashboard') }}" wire:navigate
-                        class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-slate-600 hover:bg-brand-50 hover:text-brand-600"><svg
+                        class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold hover:bg-brand-50 hover:text-brand-600 {{ request()->routeIs('dashboard') ? 'bg-brand-50 text-brand-700' : 'text-slate-600' }}"><svg
                             class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <rect width="7" height="7" x="3" y="3" rx="1" />
                             <rect width="7" height="7" x="14" y="3" rx="1" />
                             <rect width="7" height="7" x="14" y="14" rx="1" />
                             <rect width="7" height="7" x="3" y="14" rx="1" />
                         </svg>Dashboard</a>
-                    <button type="button" @click="masterOpen = !masterOpen"
+                    <button type="button" @click="$store.sidebar.masterOpen = !$store.sidebar.masterOpen"
                         class="flex w-full items-center justify-between rounded-xl px-3 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-brand-600"><span
                             class="flex items-center gap-3"><svg class="h-5 w-5" viewBox="0 0 24 24" fill="none"
                                 stroke="currentColor" stroke-width="2">
                                 <path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z" />
                             </svg>Master Data</span><svg class="h-4 w-4 transition-transform"
-                            :class="masterOpen ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none"
+                            :class="$store.sidebar.masterOpen ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2">
                             <path d="m6 9 6 6 6-6" />
                         </svg></button>
-                    <div x-show="masterOpen" class="ml-5 border-l border-slate-200 pl-4">
+                    <div x-show="$store.sidebar.masterOpen" class="ml-5 border-l border-slate-200 pl-4">
                         @foreach ([['label' => 'Users', 'href' => route('users')], ['label' => 'Role & Permission', 'href' => route('roles-permissions')], ['label' => 'Wilayah', 'href' => route('cities')], ['label' => 'Outlet', 'href' => route('outlets')], ['label' => 'Armada', 'href' => route('vehicles')], ['label' => 'Supir', 'href' => route('drivers')], ['label' => 'Rute', 'href' => route('routes')], ['label' => 'Jadwal', 'href' => route('trips')]] as $menu)
                             <a href="{{ $menu['href'] }}" wire:navigate
-                                class="block rounded-lg px-3 py-2 text-sm {{ $menu['label'] === $title ? 'bg-brand-50 font-bold text-brand-700' : 'text-slate-500 hover:bg-brand-50 hover:text-brand-600' }}">{{ $menu['label'] }}</a>
+                                class="block rounded-lg px-3 py-2 text-sm {{ request()->url() === $menu['href'] ? 'bg-brand-50 font-bold text-brand-700' : 'text-slate-500 hover:bg-brand-50 hover:text-brand-600' }}">{{ $menu['label'] }}</a>
+                        @endforeach
+                    </div>
+                    <button type="button" @click="$store.sidebar.paketOpen = !$store.sidebar.paketOpen"
+                        class="flex w-full items-center justify-between rounded-xl px-3 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-brand-600"><span
+                            class="flex items-center gap-3"><svg class="h-5 w-5" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
+                                <path
+                                    d="M21 8l-9-5-9 5 9 5 9-5Zm0 0v8l-9 5m0-8v8m0-8L3 8m9 5-9-5" />
+                            </svg>Paket</span><svg class="h-4 w-4 transition-transform"
+                            :class="$store.sidebar.paketOpen ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2">
+                            <path d="m6 9 6 6 6-6" />
+                        </svg></button>
+                    <div x-show="$store.sidebar.paketOpen" class="ml-5 border-l border-slate-200 pl-4">
+                        @foreach ([['label' => 'Statistik', 'href' => route('packages.statistics')], ['label' => 'Pengaturan', 'href' => '#'], ['label' => 'Semua Paket', 'href' => '#'], ['label' => 'Tracing', 'href' => '#']] as $menu)
+                            <a href="{{ $menu['href'] }}" @if ($menu['label'] === 'Statistik') wire:navigate @endif
+                                class="block rounded-lg px-3 py-2 text-sm {{ request()->url() === $menu['href'] ? 'bg-brand-50 font-bold text-brand-700' : 'text-slate-500 hover:bg-brand-50 hover:text-brand-600' }}">{{ $menu['label'] }}</a>
                         @endforeach
                     </div>
                     @foreach (['Booking', 'Laporan', 'Pengaturan'] as $menu)
@@ -113,6 +142,7 @@
                     @endforeach
                 </div>
             </nav>
+            @endpersist
 
             <div class="border-t border-slate-100 p-4">
                 <div class="flex items-center gap-3 rounded-xl bg-slate-50 p-3"><img
@@ -132,10 +162,10 @@
             </div>
         </aside>
 
-        <div class="lg:pl-72">
+        <div class="flex h-screen flex-col lg:pl-72">
             <header
-                class="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-slate-200 bg-white/90 px-4 backdrop-blur sm:px-6 lg:px-8">
-                <div class="flex items-center gap-3"><button type="button" @click="sidebarOpen = true"
+                class="sticky top-0 z-30 flex h-20 shrink-0 items-center justify-between border-b border-slate-200 bg-white/90 px-4 backdrop-blur sm:px-6 lg:px-8">
+                <div class="flex items-center gap-3"><button type="button" @click="$store.sidebar.open = true"
                         class="rounded-xl border border-slate-200 p-2.5 text-slate-600 hover:bg-slate-50 lg:hidden"
                         aria-label="Buka sidebar"><svg class="h-5 w-5" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2">
@@ -154,7 +184,7 @@
                     </svg><span wire:loading.remove wire:target="logout">Keluar</span><span wire:loading
                         wire:target="logout">Keluar...</span></button>
             </header>
-            <main class="mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">{{ $slot }}</main>
+            <main class="mx-auto w-full max-w-7xl flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 lg:p-8">{{ $slot }}</main>
         </div>
     </div>
 

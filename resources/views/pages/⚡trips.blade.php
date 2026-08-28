@@ -11,22 +11,202 @@ use Livewire\WithPagination;
 
 new #[Layout('layouts::admin')] class extends Component {
     use WithPagination;
-    public string $title = 'Jadwal'; public string $section = 'Master Data'; public string $search = ''; public bool $modalOpen = false; public bool $confirmDeleteOpen = false; public ?int $editingId = null; public ?int $deleteId = null; public ?int $routeId = null; public ?int $vehicleId = null; public ?int $driverId = null; public string $departureDate = ''; public string $departureTime = '08:00'; public string $arrivalTime = '12:00'; public string $status = 'scheduled';
-    public function mount(): void { $this->departureDate = now()->toDateString(); }
-    public function updatingSearch(): void { $this->resetPage(); }
-    public function openCreate(): void { $this->resetForm(); $this->departureDate = now()->toDateString(); $this->modalOpen = true; }
-    public function openEdit(int $id): void { $trip = Trip::findOrFail($id); $this->editingId = $id; $this->routeId = $trip->travel_route_id; $this->vehicleId = $trip->vehicle_id; $this->driverId = $trip->driver_id; $this->departureDate = $trip->departure_date->format('Y-m-d'); $this->departureTime = substr($trip->departure_time, 0, 5); $this->arrivalTime = $trip->estimated_arrival_time ? substr($trip->estimated_arrival_time, 0, 5) : ''; $this->status = $trip->status; $this->resetValidation(); $this->modalOpen = true; }
-    public function save(): void { $this->validate(['routeId' => ['required', 'exists:travel_routes,id'], 'vehicleId' => ['required', 'exists:vehicles,id'], 'driverId' => ['nullable', 'exists:users,id'], 'departureDate' => ['required', 'date'], 'departureTime' => ['required'], 'arrivalTime' => ['nullable'], 'status' => ['required', 'in:draft,scheduled,boarding,on_the_way,completed,cancelled']]); Trip::updateOrCreate(['id' => $this->editingId], ['travel_route_id' => $this->routeId, 'vehicle_id' => $this->vehicleId, 'driver_id' => $this->driverId, 'departure_date' => $this->departureDate, 'departure_time' => $this->departureTime, 'estimated_arrival_time' => $this->arrivalTime ?: null, 'status' => $this->status]); $message = $this->editingId ? 'Jadwal berhasil diperbarui.' : 'Jadwal berhasil ditambahkan.'; $this->modalOpen = false; $this->resetForm(); session()->flash('toast', ['type' => 'success', 'message' => $message]); }
-    public function confirmDelete(int $id): void { $this->deleteId = $id; $this->confirmDeleteOpen = true; }
-    public function delete(): void { Trip::findOrFail($this->deleteId)->delete(); $this->confirmDeleteOpen = false; $this->deleteId = null; session()->flash('toast', ['type' => 'success', 'message' => 'Jadwal berhasil dihapus.']); }
-    public function logout(): void { auth()->logout(); request()->session()->invalidate(); request()->session()->regenerateToken(); $this->redirectRoute('login', navigate: true); }
-    private function resetForm(): void { $this->reset(['modalOpen', 'editingId', 'deleteId', 'routeId', 'vehicleId', 'driverId', 'departureDate', 'departureTime', 'arrivalTime', 'status']); $this->status = 'scheduled'; $this->departureTime = '08:00'; $this->arrivalTime = '12:00'; $this->resetValidation(); }
-    public function render(): mixed { return view('pages.⚡trips', ['trips' => Trip::with(['travelRoute.originCity', 'travelRoute.destinationCity', 'vehicle', 'driver'])->when($this->search !== '', fn ($q) => $q->whereHas('travelRoute', fn ($route) => $route->where('name', 'like', '%'.$this->search.'%')))->latest('departure_date')->paginate(10), 'routes' => TravelRoute::orderBy('name')->get(), 'vehicles' => Vehicle::where('status', 'active')->orderBy('code')->get(), 'drivers' => User::whereHas('roles', fn ($q) => $q->where('name', 'supir'))->orderBy('name')->get()]); }
+    public string $title = 'Jadwal';
+    public string $section = 'Master Data';
+    public string $search = '';
+    public bool $modalOpen = false;
+    public bool $confirmDeleteOpen = false;
+    public ?int $editingId = null;
+    public ?int $deleteId = null;
+    public ?int $routeId = null;
+    public ?int $vehicleId = null;
+    public ?int $driverId = null;
+    public string $departureDate = '';
+    public string $departureTime = '08:00';
+    public string $arrivalTime = '12:00';
+    public string $status = 'scheduled';
+    public function mount(): void
+    {
+        $this->departureDate = now()->toDateString();
+    }
+    public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
+    public function openCreate(): void
+    {
+        $this->resetForm();
+        $this->departureDate = now()->toDateString();
+        $this->modalOpen = true;
+    }
+    public function openEdit(int $id): void
+    {
+        $trip = Trip::findOrFail($id);
+        $this->editingId = $id;
+        $this->routeId = $trip->travel_route_id;
+        $this->vehicleId = $trip->vehicle_id;
+        $this->driverId = $trip->driver_id;
+        $this->departureDate = $trip->departure_date->format('Y-m-d');
+        $this->departureTime = substr($trip->departure_time, 0, 5);
+        $this->arrivalTime = $trip->estimated_arrival_time ? substr($trip->estimated_arrival_time, 0, 5) : '';
+        $this->status = $trip->status;
+        $this->resetValidation();
+        $this->modalOpen = true;
+    }
+    public function save(): void
+    {
+        $this->validate(['routeId' => ['required', 'exists:travel_routes,id'], 'vehicleId' => ['required', 'exists:vehicles,id'], 'driverId' => ['nullable', 'exists:users,id'], 'departureDate' => ['required', 'date'], 'departureTime' => ['required'], 'arrivalTime' => ['nullable'], 'status' => ['required', 'in:draft,scheduled,boarding,on_the_way,completed,cancelled']]);
+        Trip::updateOrCreate(['id' => $this->editingId], ['travel_route_id' => $this->routeId, 'vehicle_id' => $this->vehicleId, 'driver_id' => $this->driverId, 'departure_date' => $this->departureDate, 'departure_time' => $this->departureTime, 'estimated_arrival_time' => $this->arrivalTime ?: null, 'status' => $this->status]);
+        $message = $this->editingId ? 'Jadwal berhasil diperbarui.' : 'Jadwal berhasil ditambahkan.';
+        $this->modalOpen = false;
+        $this->resetForm();
+        session()->flash('toast', ['type' => 'success', 'message' => $message]);
+    }
+    public function confirmDelete(int $id): void
+    {
+        $this->deleteId = $id;
+        $this->confirmDeleteOpen = true;
+    }
+    public function delete(): void
+    {
+        Trip::findOrFail($this->deleteId)->delete();
+        $this->confirmDeleteOpen = false;
+        $this->deleteId = null;
+        session()->flash('toast', ['type' => 'success', 'message' => 'Jadwal berhasil dihapus.']);
+    }
+    public function logout(): void
+    {
+        auth()->logout();
+        request()->session()->invalidate();
+        request()->session()->regenerateToken();
+        $this->redirectRoute('login', navigate: true);
+    }
+    private function resetForm(): void
+    {
+        $this->reset(['modalOpen', 'editingId', 'deleteId', 'routeId', 'vehicleId', 'driverId', 'departureDate', 'departureTime', 'arrivalTime', 'status']);
+        $this->status = 'scheduled';
+        $this->departureTime = '08:00';
+        $this->arrivalTime = '12:00';
+        $this->resetValidation();
+    }
+    public function render(): mixed
+    {
+        return view('pages.⚡trips', [
+            'trips' => Trip::with(['travelRoute.originCity', 'travelRoute.destinationCity', 'vehicle', 'driver'])
+                ->when($this->search !== '', fn($q) => $q->whereHas('travelRoute', fn($route) => $route->where('name', 'like', '%' . $this->search . '%')))
+                ->latest('departure_date')
+                ->paginate(10),
+            'routes' => TravelRoute::orderBy('name')->get(),
+            'vehicles' => Vehicle::where('status', 'active')->orderBy('code')->get(),
+            'drivers' => User::whereHas('roles', fn($q) => $q->where('name', 'supir'))->orderBy('name')->get(),
+        ]);
+    }
 };
 ?>
 <div>
-@include('pages.partials.crud-header', ['heading' => 'Jadwal', 'description' => 'Kelola trip harian, armada, dan supir.'])
-<div class="mt-8 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><div class="flex justify-end border-b border-slate-100 p-4"><input wire:model.live.debounce.300ms="search" placeholder="Cari nama rute..." class="w-full rounded-xl border px-4 py-2.5 text-sm sm:max-w-xs"></div><div class="relative overflow-x-auto"><div wire:loading wire:target="search,save,openEdit,confirmDelete,delete" class="absolute inset-0 z-10 flex items-center justify-center bg-white/70"><span class="rounded-xl bg-white px-4 py-3 text-sm font-semibold shadow-lg">Memuat data...</span></div><table class="w-full min-w-170 text-left text-sm"><thead class="bg-slate-50 text-xs uppercase text-slate-500"><tr><th class="px-6 py-4">Tanggal/Jam</th><th class="px-6 py-4">Rute</th><th class="px-6 py-4">Armada</th><th class="px-6 py-4">Supir</th><th class="px-6 py-4">Status</th><th class="px-6 py-4 text-right">Aksi</th></tr></thead><tbody class="divide-y divide-slate-100">@forelse ($trips as $trip)<tr><td class="px-6 py-4"><p class="font-bold">{{ $trip->departure_date->format('d M Y') }}</p><p class="text-xs text-slate-400">{{ substr($trip->departure_time, 0, 5) }}</p></td><td class="px-6 py-4">{{ $trip->travelRoute->originCity->name }} &rarr; {{ $trip->travelRoute->destinationCity->name }}</td><td class="px-6 py-4">{{ $trip->vehicle->code }}</td><td class="px-6 py-4">{{ $trip->driver?->name ?: '-' }}</td><td class="px-6 py-4"><span class="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-bold text-brand-700">{{ ucfirst(str_replace('_', ' ', $trip->status)) }}</span></td><td class="px-6 py-4 text-right"><button wire:click="openEdit({{ $trip->id }})" class="px-2 text-xs font-bold text-brand-600">Edit</button><button wire:click="confirmDelete({{ $trip->id }})" class="px-2 text-xs font-bold text-red-600">Hapus</button></td></tr>@empty<tr><td colspan="6" class="px-6 py-12 text-center text-slate-500">Belum ada jadwal.</td></tr>@endforelse</tbody></table></div><div class="border-t border-slate-100 px-6 py-4">{{ $trips->links() }}</div></div>
-@if ($modalOpen)<div class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-900/50 p-4"><div class="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl"><h2 class="text-xl font-extrabold">{{ $editingId ? 'Edit' : 'Tambah' }} Jadwal</h2><form wire:submit="save" class="mt-5 space-y-4"><select wire:model="routeId" class="w-full rounded-xl border px-4 py-3 text-sm"><option value="">Pilih rute</option>@foreach ($routes as $route)<option value="{{ $route->id }}">{{ $route->name }}</option>@endforeach</select><select wire:model="vehicleId" class="w-full rounded-xl border px-4 py-3 text-sm"><option value="">Pilih armada</option>@foreach ($vehicles as $vehicle)<option value="{{ $vehicle->id }}">{{ $vehicle->code }} - {{ $vehicle->license_plate }}</option>@endforeach</select><select wire:model="driverId" class="w-full rounded-xl border px-4 py-3 text-sm"><option value="">Pilih supir</option>@foreach ($drivers as $driver)<option value="{{ $driver->id }}">{{ $driver->name }}</option>@endforeach</select><div class="grid grid-cols-1 gap-4 sm:grid-cols-3"><input wire:model="departureDate" type="date" class="rounded-xl border px-3 py-3 text-sm"><input wire:model="departureTime" type="time" class="rounded-xl border px-3 py-3 text-sm"><input wire:model="arrivalTime" type="time" class="rounded-xl border px-3 py-3 text-sm"></div><select wire:model="status" class="w-full rounded-xl border px-4 py-3 text-sm"><option value="draft">Draft</option><option value="scheduled">Scheduled</option><option value="boarding">Boarding</option><option value="on_the_way">Dalam perjalanan</option><option value="completed">Selesai</option><option value="cancelled">Dibatalkan</option></select><div class="flex justify-end gap-3"><button type="button" wire:click="$set('modalOpen', false)" class="rounded-xl border px-5 py-3 text-sm font-bold">Batal</button><button wire:loading.attr="disabled" class="rounded-xl bg-brand-500 px-5 py-3 text-sm font-bold text-white"><span wire:loading.remove wire:target="save">Simpan</span><span wire:loading wire:target="save">Menyimpan...</span></button></div></form></div></div>@endif
-@if ($confirmDeleteOpen)<div class="fixed inset-0 z-60 flex items-center justify-center bg-slate-900/50 p-4"><div class="rounded-2xl bg-white p-6 shadow-xl"><h2 class="font-extrabold">Hapus jadwal?</h2><div class="mt-5 flex justify-end gap-3"><button wire:click="$set('confirmDeleteOpen', false)" class="rounded-xl border px-4 py-2 text-sm font-bold">Batal</button><button wire:click="delete" class="rounded-xl bg-red-600 px-4 py-2 text-sm font-bold text-white">Hapus</button></div></div></div>@endif
+    @include('pages.partials.crud-header', [
+        'heading' => 'Jadwal',
+        'description' => 'Kelola trip harian, armada, dan supir.',
+    ])
+    <div class="mt-8 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div class="flex justify-end border-b border-slate-100 p-4"><input wire:model.live.debounce.300ms="search"
+                placeholder="Cari nama rute..." class="w-full rounded-xl border px-4 py-2.5 text-sm sm:max-w-xs"></div>
+        <div class="relative overflow-x-auto">
+            <div wire:loading wire:target="search,save,openEdit,confirmDelete,delete"
+                class="absolute inset-0 z-10 flex items-center justify-center bg-white/70"><span
+                    class="rounded-xl bg-white px-4 py-3 text-sm font-semibold shadow-lg">Memuat data...</span></div>
+            <table class="w-full min-w-170 text-left text-sm">
+                <thead class="bg-slate-50 text-xs uppercase text-slate-500">
+                    <tr>
+                        <th class="px-6 py-4">Tanggal/Jam</th>
+                        <th class="px-6 py-4">Rute</th>
+                        <th class="px-6 py-4">Armada</th>
+                        <th class="px-6 py-4">Supir</th>
+                        <th class="px-6 py-4">Status</th>
+                        <th class="px-6 py-4 text-right">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    @forelse ($trips as $trip)
+                        <tr>
+                            <td class="px-6 py-4">
+                                <p class="font-bold">{{ $trip->departure_date->format('d M Y') }}</p>
+                                <p class="text-xs text-slate-400">{{ substr($trip->departure_time, 0, 5) }}</p>
+                            </td>
+                            <td class="px-6 py-4">{{ $trip->travelRoute->originCity->name }} &rarr;
+                                {{ $trip->travelRoute->destinationCity->name }}</td>
+                            <td class="px-6 py-4">{{ $trip->vehicle->code }}</td>
+                            <td class="px-6 py-4">{{ $trip->driver?->name ?: '-' }}</td>
+                            <td class="px-6 py-4"><span
+                                    class="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-bold text-brand-700">{{ ucfirst(str_replace('_', ' ', $trip->status)) }}</span>
+                            </td>
+                            <td class="px-6 py-4 text-right"><button wire:click="openEdit({{ $trip->id }})"
+                                    class="px-2 text-xs font-bold text-brand-600">Edit</button><button
+                                    wire:click="confirmDelete({{ $trip->id }})"
+                                    class="px-2 text-xs font-bold text-red-600">Hapus</button></td>
+                    </tr>@empty<tr>
+                            <td colspan="6" class="px-6 py-12 text-center text-slate-500">Belum ada jadwal.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+        <div class="border-t border-slate-100 px-6 py-4">{{ $trips->links() }}</div>
+    </div>
+    @if ($modalOpen)
+        <div class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-900/50 p-4">
+            <div class="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
+                <h2 class="text-xl font-extrabold">{{ $editingId ? 'Edit' : 'Tambah' }} Jadwal</h2>
+                <form wire:submit="save" class="mt-5 space-y-4"><select wire:model="routeId"
+                        class="w-full rounded-xl border px-4 py-3 text-sm">
+                        <option value="">Pilih rute</option>
+                        @foreach ($routes as $route)
+                            <option value="{{ $route->id }}">{{ $route->name }}</option>
+                        @endforeach
+                    </select>
+                    <select wire:model="vehicleId" class="w-full rounded-xl border px-4 py-3 text-sm">
+                        <option value="">Pilih armada</option>
+                        @foreach ($vehicles as $vehicle)
+                            <option value="{{ $vehicle->id }}">{{ $vehicle->code }} - {{ $vehicle->license_plate }}
+                            </option>
+                        @endforeach
+                    </select>
+                    <select wire:model="driverId" class="w-full rounded-xl border px-4 py-3 text-sm">
+                        <option value="">Pilih supir</option>
+                        @foreach ($drivers as $driver)
+                            <option value="{{ $driver->id }}">{{ $driver->name }}</option>
+                        @endforeach
+                    </select>
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3"><input wire:model="departureDate" type="date"
+                            class="rounded-xl border px-3 py-3 text-sm"><input wire:model="departureTime" type="time"
+                            class="rounded-xl border px-3 py-3 text-sm"><input wire:model="arrivalTime" type="time"
+                            class="rounded-xl border px-3 py-3 text-sm"></div><select wire:model="status"
+                        class="w-full rounded-xl border px-4 py-3 text-sm">
+                        <option value="draft">Draft</option>
+                        <option value="scheduled">Scheduled</option>
+                        <option value="boarding">Boarding</option>
+                        <option value="on_the_way">Dalam perjalanan</option>
+                        <option value="completed">Selesai</option>
+                        <option value="cancelled">Dibatalkan</option>
+                    </select>
+                    <div class="flex justify-end gap-3"><button type="button" wire:click="$set('modalOpen', false)"
+                            class="rounded-xl border px-5 py-3 text-sm font-bold">Batal</button><button
+                            wire:loading.attr="disabled"
+                            class="rounded-xl bg-brand-500 px-5 py-3 text-sm font-bold text-white"><span
+                                wire:loading.remove wire:target="save">Simpan</span><span wire:loading
+                                wire:target="save">Menyimpan...</span></button></div>
+                </form>
+            </div>
+        </div>
+    @endif
+    @if ($confirmDeleteOpen)
+        <div class="fixed inset-0 z-60 flex items-center justify-center bg-slate-900/50 p-4">
+            <div class="rounded-2xl bg-white p-6 shadow-xl">
+                <h2 class="font-extrabold">Hapus jadwal?</h2>
+                <div class="mt-5 flex justify-end gap-3"><button wire:click="$set('confirmDeleteOpen', false)"
+                        class="rounded-xl border px-4 py-2 text-sm font-bold">Batal</button><button wire:click="delete"
+                        class="rounded-xl bg-red-600 px-4 py-2 text-sm font-bold text-white">Hapus</button></div>
+            </div>
+        </div>
+    @endif
 </div>

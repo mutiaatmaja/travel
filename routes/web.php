@@ -26,3 +26,7 @@ Route::livewire('/vehicles', 'pages::vehicles')->middleware('auth')->name('vehic
 Route::livewire('/drivers', 'pages::drivers')->middleware('auth')->name('drivers');
 Route::livewire('/routes', 'pages::routes')->middleware('auth')->name('routes');
 Route::livewire('/trips', 'pages::trips')->middleware('auth')->name('trips');
+
+Route::livewire('/packages/statistics', 'pages::package-statistics')
+    ->middleware('auth')
+    ->name('packages.statistics');
