@@ -302,6 +302,59 @@ new class extends Component {
                 </div>
             </section>
 
+            {{-- Layanan Lainnya --}}
+            <section id="layanan" class="bg-orange-50/70 py-20">
+                <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                    <div class="mx-auto max-w-2xl text-center">
+                        <span class="text-sm font-bold uppercase tracking-wide text-brand-600">Layanan Lainnya</span>
+                        <h2 class="mt-2 text-2xl font-extrabold text-slate-900 sm:text-3xl">Lebih dari Sekadar Perjalanan
+                        </h2>
+                        <p class="mt-3 text-sm text-slate-500 sm:text-base">Berbagai kebutuhan perjalanan dan pengiriman
+                            tersedia dalam satu layanan.</p>
+                    </div>
+
+                    <div class="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                        @foreach ([['title' => 'Bisa Kirim Paket', 'desc' => 'Kirim dokumen dan paket antar kota dengan mudah dan aman.', 'icon' => 'package'], ['title' => 'Beli Tiket Pesawat', 'desc' => 'Temukan dan pesan tiket pesawat untuk perjalanan lanjutanmu.', 'icon' => 'plane'], ['title' => 'Akomodasi Perjalanan', 'desc' => 'Siapkan penginapan nyaman di kota tujuan tanpa ribet.', 'icon' => 'hotel'], ['title' => 'Asuransi Penumpang', 'desc' => 'Perjalanan lebih tenang dengan perlindungan untuk setiap penumpang.', 'icon' => 'shield']] as $service)
+                            <div
+                                class="rounded-2xl border border-orange-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-brand-200 hover:shadow-lg">
+                                <span
+                                    class="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-500 text-white shadow-md shadow-brand-500/20">
+                                    @if ($service['icon'] === 'package')
+                                        <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                            stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="m21 8-9-5-9 5 9 5 9-5Zm0 0v8l-9 5m0-8v8m0-8L3 8" />
+                                        </svg>
+                                    @elseif ($service['icon'] === 'plane')
+                                        <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                            stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="m2 16 20-5-8-3-3-5-2 1 1 6-6 2-2-2-1 1 3 5Z" />
+                                            <path d="M9 18h8" />
+                                        </svg>
+                                    @elseif ($service['icon'] === 'hotel')
+                                        <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                            stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                            <path
+                                                d="M3 21V8l9-5 9 5v13M3 10h18M7 21v-5h10v5M7 12h.01M11 12h.01M15 12h.01" />
+                                        </svg>
+                                    @else
+                                        <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                            stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3Z" />
+                                            <path d="m9 12 2 2 4-4" />
+                                        </svg>
+                                    @endif
+                                </span>
+                                <h3 class="mt-5 text-base font-bold text-slate-900">{{ $service['title'] }}</h3>
+                                <p class="mt-2 text-sm leading-6 text-slate-500">{{ $service['desc'] }}</p>
+                                <a href="#"
+                                    class="mt-5 inline-flex items-center gap-1 text-sm font-bold text-brand-600 hover:text-brand-700">Pelajari
+                                    lebih lanjut <span aria-hidden="true">&rarr;</span></a>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </section>
+
             {{-- Kenapa Kami --}}
             <section id="kenapa" class="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
                 <div class="mx-auto max-w-2xl text-center">
