@@ -11,12 +11,12 @@ class CitySeeder extends Seeder
     {
         foreach ([
             ['code' => 'PNT', 'name' => 'Pontianak', 'province' => 'Kalimantan Barat'],
-            ['code' => 'SKW', 'name' => 'Singkawang', 'province' => 'Kalimantan Barat'],
-            ['code' => 'MMP', 'name' => 'Mempawah', 'province' => 'Kalimantan Barat'],
-            ['code' => 'SPY', 'name' => 'Sungai Pinyuh', 'province' => 'Kalimantan Barat'],
-            ['code' => 'PMK', 'name' => 'Pemangkat', 'province' => 'Kalimantan Barat'],
+            ['code' => 'SGG', 'name' => 'Sanggau', 'province' => 'Kalimantan Barat'],
+            ['code' => 'SDK', 'name' => 'Sekadau', 'province' => 'Kalimantan Barat'],
+            ['code' => 'STG', 'name' => 'Sintang', 'province' => 'Kalimantan Barat'],
+            ['code' => 'SMT', 'name' => 'Semitau', 'province' => 'Kalimantan Barat'],
         ] as $city) {
-            City::updateOrCreate(['code' => $city['code']], $city);
+            City::create([...$city, 'is_active' => true]);
         }
     }
 }

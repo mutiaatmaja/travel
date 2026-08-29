@@ -122,7 +122,8 @@ new #[Layout('layouts::admin')] class extends Component {
     <div class="mt-6 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
         <div class="flex items-center justify-between border-b border-slate-100 p-6">
             <h3 class="font-extrabold text-slate-900">Outlet Pengiriman Teraktif</h3>
-            <a href="#" class="text-xs font-bold text-brand-600">Lihat semua &rarr;</a>
+            <a href="{{ route('packages.settings') }}" wire:navigate
+                class="text-xs font-bold text-brand-600">Pengaturan paket &rarr;</a>
         </div>
         <div class="overflow-x-auto">
             <table class="w-full min-w-150 text-left text-sm">

@@ -94,10 +94,8 @@
             :class="$store.sidebar.open ? 'translate-x-0' : '-translate-x-full'">
             <div class="flex h-20 items-center justify-between border-b border-slate-100 px-6">
                 <a href="{{ route('home') }}" wire:navigate class="flex items-center gap-2">
-                    <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-500 text-white"><svg
-                            class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M3 12h18M3 12l4-4M3 12l4 4M21 12l-4-4M21 12l-4 4" />
-                        </svg></span>
+                    <img src="{{ asset('asetgambar/logo.png') }}" alt="TransGo"
+                        class="h-10 w-10 rounded-xl object-cover">
                     <span class="text-lg font-extrabold tracking-tight text-slate-900">Trans<span
                             class="text-brand-500">Go</span></span>
                 </a>
@@ -148,8 +146,8 @@
                                 <path d="m6 9 6 6 6-6" />
                             </svg></button>
                         <div x-show="$store.sidebar.paketOpen" class="ml-5 border-l border-slate-200 pl-4">
-                            @foreach ([['label' => 'Statistik', 'href' => route('packages.statistics')], ['label' => 'Pengaturan', 'href' => '#'], ['label' => 'Semua Paket', 'href' => '#'], ['label' => 'Tracing', 'href' => '#']] as $menu)
-                                <a href="{{ $menu['href'] }}" @if ($menu['label'] === 'Statistik') wire:navigate @endif
+                            @foreach ([['label' => 'Statistik', 'href' => route('packages.statistics')], ['label' => 'Pengaturan', 'href' => route('packages.settings')], ['label' => 'Semua Paket', 'href' => route('packages')], ['label' => 'Tracing', 'href' => '#']] as $menu)
+                                <a href="{{ $menu['href'] }}" @if ($menu['label'] === 'Statistik' || $menu['label'] === 'Pengaturan' || $menu['label'] === 'Semua Paket') wire:navigate @endif
                                     class="block rounded-lg px-3 py-2 text-sm {{ request()->url() === $menu['href'] ? 'bg-brand-50 font-bold text-brand-700' : 'text-slate-500 hover:bg-brand-50 hover:text-brand-600' }}">{{ $menu['label'] }}</a>
                             @endforeach
                         </div>

@@ -30,3 +30,11 @@ Route::livewire('/trips', 'pages::trips')->middleware('auth')->name('trips');
 Route::livewire('/packages/statistics', 'pages::package-statistics')
     ->middleware('auth')
     ->name('packages.statistics');
+
+Route::livewire('/packages/settings', 'pages::package-settings')
+    ->middleware('auth')
+    ->name('packages.settings');
+
+Route::livewire('/packages', 'pages::packages')
+    ->middleware('auth')
+    ->name('packages');

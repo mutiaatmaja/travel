@@ -23,6 +23,7 @@ new #[Layout('layouts::admin')] class extends Component {
     public string $code = '';
     public string $name = '';
     public int $duration = 240;
+    public int $cost = 0;
     public ?float $distance = null;
     public array $selectedStops = [];
     public function updatingSearch(): void
@@ -43,6 +44,7 @@ new #[Layout('layouts::admin')] class extends Component {
         $this->originCityId = $route->origin_city_id;
         $this->destinationCityId = $route->destination_city_id;
         $this->duration = $route->estimated_duration_minutes;
+        $this->cost = (int) $route->cost;
         $this->distance = $route->distance_km;
         $this->selectedStops = $route->stops->sortBy('stop_sequence')->pluck('outlet_id')->map(fn(int $id): string => (string) $id)->all();
         $this->resetValidation();
@@ -50,8 +52,8 @@ new #[Layout('layouts::admin')] class extends Component {
     }
     public function save(): void
     {
-        $this->validate(['code' => ['required', Rule::unique('travel_routes', 'code')->ignore($this->editingId)], 'name' => ['required', 'max:255'], 'originCityId' => ['required', 'exists:cities,id'], 'destinationCityId' => ['required', 'different:originCityId', 'exists:cities,id'], 'duration' => ['required', 'integer', 'min:1'], 'distance' => ['nullable', 'numeric', 'min:0'], 'selectedStops' => ['required', 'array', 'min:2'], 'selectedStops.*' => ['integer', 'distinct', 'exists:outlets,id']]);
-        $route = TravelRoute::updateOrCreate(['id' => $this->editingId], ['code' => strtoupper($this->code), 'name' => $this->name, 'origin_city_id' => $this->originCityId, 'destination_city_id' => $this->destinationCityId, 'estimated_duration_minutes' => $this->duration, 'distance_km' => $this->distance, 'is_active' => true]);
+        $this->validate(['code' => ['required', Rule::unique('travel_routes', 'code')->ignore($this->editingId)], 'name' => ['required', 'max:255'], 'originCityId' => ['required', 'exists:cities,id'], 'destinationCityId' => ['required', 'different:originCityId', 'exists:cities,id'], 'duration' => ['required', 'integer', 'min:1'], 'cost' => ['required', 'integer', 'min:0'], 'distance' => ['nullable', 'numeric', 'min:0'], 'selectedStops' => ['required', 'array', 'min:2'], 'selectedStops.*' => ['integer', 'distinct', 'exists:outlets,id']]);
+        $route = TravelRoute::updateOrCreate(['id' => $this->editingId], ['code' => strtoupper($this->code), 'name' => $this->name, 'origin_city_id' => $this->originCityId, 'destination_city_id' => $this->destinationCityId, 'estimated_duration_minutes' => $this->duration, 'distance_km' => $this->distance, 'cost' => $this->cost, 'is_active' => true]);
         RouteStop::where('travel_route_id', $route->id)->delete();
         foreach ($this->selectedStops as $index => $outletId) {
             RouteStop::create(['travel_route_id' => $route->id, 'stop_sequence' => $index + 1, 'outlet_id' => $outletId, 'arrival_offset_minutes' => $index * 60, 'departure_offset_minutes' => $index * 60 + 10, 'is_boarding_allowed' => true, 'is_dropoff_allowed' => true]);
@@ -82,8 +84,9 @@ new #[Layout('layouts::admin')] class extends Component {
     }
     private function resetForm(): void
     {
-        $this->reset(['modalOpen', 'editingId', 'deleteId', 'originCityId', 'destinationCityId', 'code', 'name', 'distance', 'selectedStops']);
+        $this->reset(['modalOpen', 'editingId', 'deleteId', 'originCityId', 'destinationCityId', 'code', 'name', 'distance', 'cost', 'selectedStops']);
         $this->duration = 240;
+        $this->cost = 0;
         $this->resetValidation();
     }
     public function render(): mixed
@@ -120,6 +123,7 @@ new #[Layout('layouts::admin')] class extends Component {
                         <th class="px-6 py-4">Rute utama</th>
                         <th class="px-6 py-4">Urutan stop outlet</th>
                         <th class="px-6 py-4">Durasi</th>
+                        <th class="px-6 py-4">Biaya</th>
                         <th class="px-6 py-4 text-right">Aksi</th>
                     </tr>
                 </thead>
@@ -142,12 +146,13 @@ new #[Layout('layouts::admin')] class extends Component {
                                 </div>
                             </td>
                             <td class="px-6 py-4">{{ $route->estimated_duration_minutes }} menit</td>
+                            <td class="px-6 py-4">Rp{{ number_format($route->cost, 0, ',', '.') }}</td>
                             <td class="px-6 py-4 text-right"><button wire:click="openEdit({{ $route->id }})"
                                     class="px-2 text-xs font-bold text-brand-600">Edit</button><button
                                     wire:click="confirmDelete({{ $route->id }})"
                                     class="px-2 text-xs font-bold text-red-600">Hapus</button></td>
                     </tr>@empty<tr>
-                            <td colspan="5" class="px-6 py-12 text-center text-slate-500">Belum ada rute.</td>
+                            <td colspan="6" class="px-6 py-12 text-center text-slate-500">Belum ada rute.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -176,8 +181,11 @@ new #[Layout('layouts::admin')] class extends Component {
                             @endforeach
                         </select>
                         <input wire:model="duration" type="number" placeholder="Durasi (menit)"
-                            class="rounded-xl border px-4 py-3 text-sm"><input wire:model="distance" type="number"
-                            step="0.01" placeholder="Jarak (km)" class="rounded-xl border px-4 py-3 text-sm">
+                            class="rounded-xl border px-4 py-3 text-sm"><input wire:model="cost" type="number"
+                            min="0" step="1000" placeholder="Biaya (Rp)"
+                            class="rounded-xl border px-4 py-3 text-sm">
+                        <input wire:model="distance" type="number" step="0.01" placeholder="Jarak (km)"
+                            class="rounded-xl border px-4 py-3 text-sm sm:col-span-2">
                     </div>
                     <div>
                         <p class="mb-2 text-sm font-semibold">Urutan stop outlet</p>

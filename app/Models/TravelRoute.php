@@ -10,7 +10,7 @@ class TravelRoute extends Model
 {
     protected $table = 'travel_routes';
 
-    protected $fillable = ['code', 'origin_city_id', 'destination_city_id', 'name', 'estimated_duration_minutes', 'distance_km', 'is_active'];
+    protected $fillable = ['code', 'origin_city_id', 'destination_city_id', 'name', 'estimated_duration_minutes', 'distance_km', 'cost', 'is_active'];
 
     public function originCity(): BelongsTo
     {

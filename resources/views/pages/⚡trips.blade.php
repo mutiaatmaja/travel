@@ -120,6 +120,7 @@ new #[Layout('layouts::admin')] class extends Component {
                     <tr>
                         <th class="px-6 py-4">Tanggal/Jam</th>
                         <th class="px-6 py-4">Rute</th>
+                        <th class="px-6 py-4">Biaya</th>
                         <th class="px-6 py-4">Armada</th>
                         <th class="px-6 py-4">Supir</th>
                         <th class="px-6 py-4">Status</th>
@@ -135,6 +136,7 @@ new #[Layout('layouts::admin')] class extends Component {
                             </td>
                             <td class="px-6 py-4">{{ $trip->travelRoute->originCity->name }} &rarr;
                                 {{ $trip->travelRoute->destinationCity->name }}</td>
+                            <td class="px-6 py-4">Rp{{ number_format($trip->travelRoute->cost ?? 0, 0, ',', '.') }}</td>
                             <td class="px-6 py-4">{{ $trip->vehicle->code }}</td>
                             <td class="px-6 py-4">{{ $trip->driver?->name ?: '-' }}</td>
                             <td class="px-6 py-4"><span
@@ -145,7 +147,7 @@ new #[Layout('layouts::admin')] class extends Component {
                                     wire:click="confirmDelete({{ $trip->id }})"
                                     class="px-2 text-xs font-bold text-red-600">Hapus</button></td>
                     </tr>@empty<tr>
-                            <td colspan="6" class="px-6 py-12 text-center text-slate-500">Belum ada jadwal.</td>
+                            <td colspan="7" class="px-6 py-12 text-center text-slate-500">Belum ada jadwal.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -161,7 +163,8 @@ new #[Layout('layouts::admin')] class extends Component {
                         class="w-full rounded-xl border px-4 py-3 text-sm">
                         <option value="">Pilih rute</option>
                         @foreach ($routes as $route)
-                            <option value="{{ $route->id }}">{{ $route->name }}</option>
+                            <option value="{{ $route->id }}">{{ $route->name }} -
+                                Rp{{ number_format($route->cost, 0, ',', '.') }}</option>
                         @endforeach
                     </select>
                     <select wire:model="vehicleId" class="w-full rounded-xl border px-4 py-3 text-sm">

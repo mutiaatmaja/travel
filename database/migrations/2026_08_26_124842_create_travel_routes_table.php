@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('name');
             $table->unsignedSmallInteger('estimated_duration_minutes');
             $table->decimal('distance_km', 8, 2)->nullable();
+            $table->unsignedBigInteger('cost')->default(0);
             $table->boolean('is_active')->default(true);
             $table->timestamps();
 

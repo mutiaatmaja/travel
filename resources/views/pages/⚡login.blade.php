@@ -53,12 +53,8 @@ new class extends Component {
                 class="absolute inset-0 h-full w-full object-cover opacity-45 mix-blend-multiply">
             <div class="relative flex h-full flex-col justify-between text-white">
                 <a href="{{ route('home') }}" wire:navigate class="flex items-center gap-2">
-                    <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 backdrop-blur">
-                        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M3 12h18M3 12l4-4M3 12l4 4M21 12l-4-4M21 12l-4 4" />
-                        </svg>
-                    </span>
+                    <img src="{{ asset('asetgambar/logo.png') }}" alt="TransGo"
+                        class="h-10 w-10 rounded-xl object-cover">
                     <span class="text-xl font-extrabold">Trans<span class="text-orange-200">Go</span></span>
                 </a>
                 <div>
@@ -73,12 +69,7 @@ new class extends Component {
 
         <div class="p-6 sm:p-10 lg:p-14">
             <a href="{{ route('home') }}" wire:navigate class="flex items-center gap-2 lg:hidden">
-                <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-500 text-white">
-                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M3 12h18M3 12l4-4M3 12l4 4M21 12l-4-4M21 12l-4 4" />
-                    </svg>
-                </span>
+                <img src="{{ asset('asetgambar/logo.png') }}" alt="TransGo" class="h-9 w-9 rounded-xl object-cover">
                 <span class="text-lg font-extrabold text-slate-900">Trans<span class="text-brand-500">Go</span></span>
             </a>
 

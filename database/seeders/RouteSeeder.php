@@ -16,21 +16,32 @@ class RouteSeeder extends Seeder
         $outlets = Outlet::pluck('id', 'code');
 
         $routes = [
-            ['code' => 'PNT-SKW', 'origin' => 'PNT', 'destination' => 'SKW', 'name' => 'Pontianak - Singkawang', 'distance_km' => 145, 'duration' => 240, 'stops' => ['PNT-CENTER', 'SPY-CENTER', 'MMP-CENTER', 'PMK-CENTER', 'SKW-CENTER']],
-            ['code' => 'SKW-PNT', 'origin' => 'SKW', 'destination' => 'PNT', 'name' => 'Singkawang - Pontianak', 'distance_km' => 145, 'duration' => 240, 'stops' => ['SKW-CENTER', 'PMK-CENTER', 'MMP-CENTER', 'SPY-CENTER', 'PNT-CENTER']],
+            ['code' => 'PNT-SMT', 'origin' => 'PNT', 'destination' => 'SMT', 'name' => 'Pontianak - Semitau', 'distance_km' => 420, 'duration' => 600, 'cost' => 245000, 'stops' => ['PNT-CENTER', 'SGG-CENTER', 'SDK-CENTER', 'STG-CENTER', 'SMT-CENTER']],
+            ['code' => 'SMT-PNT', 'origin' => 'SMT', 'destination' => 'PNT', 'name' => 'Semitau - Pontianak', 'distance_km' => 420, 'duration' => 600, 'cost' => 245000, 'stops' => ['SMT-CENTER', 'STG-CENTER', 'SDK-CENTER', 'SGG-CENTER', 'PNT-CENTER']],
         ];
 
         foreach ($routes as $routeData) {
-            $route = TravelRoute::updateOrCreate(
-                ['code' => $routeData['code']],
-                ['origin_city_id' => $cities[$routeData['origin']], 'destination_city_id' => $cities[$routeData['destination']], 'name' => $routeData['name'], 'distance_km' => $routeData['distance_km'], 'estimated_duration_minutes' => $routeData['duration'], 'is_active' => true],
-            );
+            $route = TravelRoute::create([
+                'code' => $routeData['code'],
+                'origin_city_id' => $cities[$routeData['origin']],
+                'destination_city_id' => $cities[$routeData['destination']],
+                'name' => $routeData['name'],
+                'distance_km' => $routeData['distance_km'],
+                'estimated_duration_minutes' => $routeData['duration'],
+                'cost' => $routeData['cost'],
+                'is_active' => true,
+            ]);
 
             foreach ($routeData['stops'] as $index => $outletCode) {
-                RouteStop::updateOrCreate(
-                    ['travel_route_id' => $route->id, 'stop_sequence' => $index + 1],
-                    ['outlet_id' => $outlets[$outletCode], 'arrival_offset_minutes' => $index * 60, 'departure_offset_minutes' => $index * 60 + 10, 'is_boarding_allowed' => true, 'is_dropoff_allowed' => true],
-                );
+                RouteStop::create([
+                    'travel_route_id' => $route->id,
+                    'outlet_id' => $outlets[$outletCode],
+                    'stop_sequence' => $index + 1,
+                    'arrival_offset_minutes' => $index * 120,
+                    'departure_offset_minutes' => $index * 120 + 10,
+                    'is_boarding_allowed' => true,
+                    'is_dropoff_allowed' => true,
+                ]);
             }
         }
     }

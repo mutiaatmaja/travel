@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\City;
+use App\Models\TravelRoute;
 use Livewire\Component;
 
 new class extends Component {
@@ -14,14 +16,53 @@ new class extends Component {
     public bool $mobileMenuOpen = false;
 
     /** @var array<int, string> */
-    public array $cities = ['Pontinak', 'Jakarta', 'Bandung', 'Bogor', 'Bekasi', 'Tangerang', 'Serang', 'Semarang', 'Solo', 'Yogyakarta', 'Surabaya', 'Malang'];
+    public array $cities = [];
 
     /** @var array<int, array{from: string, to: string, price: string, duration: string, image: string}> */
-    public array $popularRoutes = [['from' => 'Jakarta', 'to' => 'Bandung', 'price' => '135.000', 'duration' => '3 jam', 'image' => 'https://picsum.photos/seed/jakarta-bandung/480/320'], ['from' => 'Bandung', 'to' => 'Yogyakarta', 'price' => '210.000', 'duration' => '7 jam', 'image' => 'https://picsum.photos/seed/bandung-jogja/480/320'], ['from' => 'Jakarta', 'to' => 'Semarang', 'price' => '190.000', 'duration' => '8 jam', 'image' => 'https://picsum.photos/seed/jakarta-semarang/480/320'], ['from' => 'Surabaya', 'to' => 'Malang', 'price' => '95.000', 'duration' => '2.5 jam', 'image' => 'https://picsum.photos/seed/surabaya-malang/480/320']];
+    public array $popularRoutes = [];
+
+    /** @var array<int, array{from: string, to: string, price: string, duration: string, date: string}> */
+    public array $routeResults = [];
 
     public function mount(): void
     {
         $this->date = now()->format('Y-m-d');
+        $this->cities = City::query()->where('is_active', true)->orderBy('name')->pluck('name')->toArray();
+
+        if ($this->cities === []) {
+            $this->cities = ['Pontianak', 'Jakarta', 'Bandung', 'Bogor', 'Bekasi', 'Tangerang', 'Serang', 'Semarang', 'Solo', 'Yogyakarta', 'Surabaya', 'Malang'];
+        }
+
+        $routes = TravelRoute::with(['originCity', 'destinationCity'])
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->limit(4)
+            ->get();
+
+        if ($routes->isEmpty()) {
+            $this->popularRoutes = [['from' => 'Jakarta', 'to' => 'Bandung', 'price' => '135.000', 'duration' => '3 jam', 'image' => 'https://picsum.photos/seed/jakarta-bandung/480/320'], ['from' => 'Bandung', 'to' => 'Yogyakarta', 'price' => '210.000', 'duration' => '7 jam', 'image' => 'https://picsum.photos/seed/bandung-jogja/480/320'], ['from' => 'Jakarta', 'to' => 'Semarang', 'price' => '190.000', 'duration' => '8 jam', 'image' => 'https://picsum.photos/seed/jakarta-semarang/480/320'], ['from' => 'Surabaya', 'to' => 'Malang', 'price' => '95.000', 'duration' => '2.5 jam', 'image' => 'https://picsum.photos/seed/surabaya-malang/480/320']];
+
+            return;
+        }
+
+        $this->popularRoutes = $routes
+            ->map(function (TravelRoute $route): array {
+                $from = $route->originCity?->name ?? 'Kota Asal';
+                $to = $route->destinationCity?->name ?? 'Kota Tujuan';
+                $durationMinutes = (int) $route->estimated_duration_minutes;
+                $hours = intdiv($durationMinutes, 60);
+                $minutes = $durationMinutes % 60;
+                $duration = $hours > 0 && $minutes > 0 ? "$hours jam $minutes menit" : ($hours > 0 ? "$hours jam" : "$minutes menit");
+
+                return [
+                    'from' => $from,
+                    'to' => $to,
+                    'price' => number_format((int) $route->cost, 0, ',', '.'),
+                    'duration' => $duration,
+                    'image' => 'https://picsum.photos/seed/' . strtolower(str_replace([' ', '-'], '', $from . '-' . $to)) . '/480/320',
+                ];
+            })
+            ->all();
     }
 
     public function swapCities(): void
@@ -51,7 +92,62 @@ new class extends Component {
             ],
         );
 
-        session()->flash('search-notice', 'Fitur pencarian jadwal segera hadir — data rute masih kami siapkan.');
+        $originCity = City::query()
+            ->where('is_active', true)
+            ->whereRaw('LOWER(name) = ?', [strtolower(trim($this->origin))])
+            ->first();
+        $destinationCity = City::query()
+            ->where('is_active', true)
+            ->whereRaw('LOWER(name) = ?', [strtolower(trim($this->destination))])
+            ->first();
+
+        if (!$originCity || !$destinationCity) {
+            $this->routeResults = [];
+            session()->flash('search-notice', 'Maaf, kota yang dipilih belum tersedia di jadwal kami saat ini.');
+
+            return;
+        }
+
+        $matchingRoutes = TravelRoute::with(['originCity', 'destinationCity'])
+            ->where('is_active', true)
+            ->where(function ($query) use ($originCity, $destinationCity) {
+                $query
+                    ->where(function ($routeQuery) use ($originCity, $destinationCity) {
+                        $routeQuery->where('origin_city_id', $originCity->id)->where('destination_city_id', $destinationCity->id);
+                    })
+                    ->orWhere(function ($routeQuery) use ($originCity, $destinationCity) {
+                        $routeQuery->where('origin_city_id', $destinationCity->id)->where('destination_city_id', $originCity->id);
+                    });
+            })
+            ->orderBy('name')
+            ->get();
+
+        $this->routeResults = $matchingRoutes
+            ->map(function (TravelRoute $route): array {
+                $from = $route->originCity?->name ?? $this->origin;
+                $to = $route->destinationCity?->name ?? $this->destination;
+                $durationMinutes = (int) $route->estimated_duration_minutes;
+                $hours = intdiv($durationMinutes, 60);
+                $minutes = $durationMinutes % 60;
+                $duration = $hours > 0 && $minutes > 0 ? "$hours jam $minutes menit" : ($hours > 0 ? "$hours jam" : "$minutes menit");
+
+                return [
+                    'from' => $from,
+                    'to' => $to,
+                    'price' => number_format((int) $route->cost, 0, ',', '.'),
+                    'duration' => $duration,
+                    'date' => $this->date,
+                ];
+            })
+            ->all();
+
+        if ($this->routeResults === []) {
+            session()->flash('search-notice', 'Belum ada jadwal untuk rute ' . $this->origin . ' - ' . $this->destination . ' pada tanggal yang dipilih.');
+
+            return;
+        }
+
+        session()->flash('search-notice', 'Jadwal tersedia untuk rute ' . $this->origin . ' - ' . $this->destination . '.');
     }
 };
 ?>
@@ -61,12 +157,8 @@ new class extends Component {
     <header class="sticky top-0 z-50 border-b border-slate-100 bg-white/80 backdrop-blur">
         <nav class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
             <a href="{{ route('home') }}" wire:navigate class="flex items-center gap-2">
-                <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-500 text-white">
-                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M3 12h18M3 12l4-4M3 12l4 4M21 12l-4-4M21 12l-4 4" />
-                    </svg>
-                </span>
+                <img src="{{ asset('asetgambar/logo.png') }}" alt="TransGo"
+                    class="h-10 w-10 rounded-xl object-cover sm:h-11 sm:w-11" />
                 <span class="text-lg font-extrabold tracking-tight text-slate-900">Trans<span
                         class="text-brand-500">Go</span></span>
             </a>
@@ -254,6 +346,43 @@ new class extends Component {
                 </form>
             </div>
         </section>
+
+        @if (!empty($routeResults))
+            <section class="mx-auto max-w-6xl px-4 pb-8 sm:px-6 lg:px-8">
+                <div class="rounded-2xl border border-brand-100 bg-brand-50/40 p-5 shadow-sm">
+                    <div class="mb-4 flex items-center justify-between gap-3">
+                        <h3 class="text-lg font-extrabold text-slate-900">Jadwal Tersedia</h3>
+                        <span class="text-sm font-semibold text-brand-700">{{ count($routeResults) }} opsi</span>
+                    </div>
+                    <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                        @foreach ($routeResults as $result)
+                            <div class="rounded-2xl border border-brand-100 bg-white p-4 shadow-sm">
+                                <div class="flex items-center gap-2 text-sm font-bold text-slate-900">
+                                    <span>{{ $result['from'] }}</span>
+                                    <svg class="h-4 w-4 text-brand-500" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <path d="M5 12h14M13 6l6 6-6 6" />
+                                    </svg>
+                                    <span>{{ $result['to'] }}</span>
+                                </div>
+                                <p class="mt-2 text-xs text-slate-400">{{ $result['date'] }}</p>
+                                <p class="mt-2 text-xs text-slate-500">Estimasi {{ $result['duration'] }}</p>
+                                <div class="mt-4 flex items-center justify-between">
+                                    <div>
+                                        <span class="text-[10px] uppercase tracking-wide text-slate-400">Mulai
+                                            dari</span>
+                                        <p class="text-lg font-extrabold text-brand-600">Rp{{ $result['price'] }}</p>
+                                    </div>
+                                    <button type="button"
+                                        class="rounded-full bg-brand-500 px-4 py-2 text-xs font-bold text-white">Pesan</button>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </section>
+        @endif
 
         {{-- Trust badges --}}
         <section class="relative -mt-14 sm:-mt-16">
@@ -516,12 +645,8 @@ new class extends Component {
                 <div class="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
                     <div>
                         <div class="flex items-center gap-2">
-                            <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-500 text-white">
-                                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M3 12h18M3 12l4-4M3 12l4 4M21 12l-4-4M21 12l-4 4" />
-                                </svg>
-                            </span>
+                            <img src="{{ asset('asetgambar/logo.png') }}" alt="TransGo"
+                                class="h-10 w-10 rounded-xl object-cover">
                             <span class="text-lg font-extrabold text-white">Trans<span
                                     class="text-brand-400">Go</span></span>
                         </div>

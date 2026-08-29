@@ -16,14 +16,19 @@ class TripSeeder extends Seeder
         $vehicle = Vehicle::where('code', 'TRG-001')->firstOrFail();
         $driverId = User::where('email', 'supir@example.com')->value('id');
 
-        Trip::updateOrCreate(
-            ['travel_route_id' => $routes['PNT-SKW'], 'departure_date' => now()->toDateString(), 'departure_time' => '08:00:00'],
-            ['vehicle_id' => $vehicle->id, 'driver_id' => $driverId, 'estimated_arrival_time' => '12:00:00', 'status' => 'scheduled'],
-        );
-
-        Trip::updateOrCreate(
-            ['travel_route_id' => $routes['SKW-PNT'], 'departure_date' => now()->addDay()->toDateString(), 'departure_time' => '08:00:00'],
-            ['vehicle_id' => $vehicle->id, 'driver_id' => $driverId, 'estimated_arrival_time' => '12:00:00', 'status' => 'scheduled'],
-        );
+        foreach ([
+            ['route' => 'PNT-SMT', 'date' => now()->toDateString()],
+            ['route' => 'SMT-PNT', 'date' => now()->addDay()->toDateString()],
+        ] as $tripData) {
+            Trip::create([
+                'travel_route_id' => $routes[$tripData['route']],
+                'vehicle_id' => $vehicle->id,
+                'driver_id' => $driverId,
+                'departure_date' => $tripData['date'],
+                'departure_time' => '08:00:00',
+                'estimated_arrival_time' => '18:00:00',
+                'status' => 'scheduled',
+            ]);
+        }
     }
 }
