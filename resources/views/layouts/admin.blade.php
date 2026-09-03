@@ -65,7 +65,6 @@
             background: #f8fafc;
         }
     </style>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
     @livewireStyles
 </head>
@@ -95,7 +94,7 @@
 
             <!-- Logo -->
             <div class="flex h-20 items-center justify-between border-b border-slate-100 px-4 lg:px-3">
-                <a href="{{ route('dashboard') }}" class="flex items-center gap-2">
+                <a wire:navigate href="{{ route('dashboard') }}" class="flex items-center gap-2">
                     <img src="{{ asset('asetgambar/logo.png') }}" alt="TransGo"
                         class="h-10 w-10 shrink-0 rounded-xl object-cover">
 
@@ -129,7 +128,7 @@
                     {{-- =====================================================
                         DASHBOARD
                     ===================================================== --}}
-                    <a href="{{ route('dashboard') }}"
+                    <a wire:navigate href="{{ route('dashboard') }}"
                         class="menu-item {{ request()->routeIs('dashboard') ? 'menu-active' : '' }}">
                         <svg class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
@@ -149,12 +148,12 @@
                             'users',
                             'roles-permissions',
                             'permissions',
-                            'wilayah.*',
-                            'outlet.*',
-                            'armada.*',
-                            'supir.*',
-                            'rute.*',
-                            'jadwal.*',
+                            'cities',
+                            'outlets',
+                            'vehicles',
+                            'drivers',
+                            'routes',
+                            'trips',
                         ])
                             ? 'true'
                             : 'false' }}
@@ -174,35 +173,35 @@
                         </button>
 
                         <div class="submenu" x-show="!sidebar.desktopCollapsed" x-cloak>
-                            <a href="{{ route('users') }}"
+                            <a wire:navigate href="{{ route('users') }}"
                                 class="submenu-item {{ request()->routeIs('users') ? 'menu-active' : '' }}">
                                 Users
                             </a>
-                            <a href="{{ route('roles-permissions') }}"
+                            <a wire:navigate href="{{ route('roles-permissions') }}"
                                 class="submenu-item {{ request()->routeIs('roles-permissions') ? 'menu-active' : '' }}">
                                 Role & Permission
                             </a>
-                            <a href="{{ route('cities') }}"
-                                class="submenu-item {{ request()->routeIs('cities.*') ? 'menu-active' : '' }}">
+                            <a wire:navigate href="{{ route('cities') }}"
+                                class="submenu-item {{ request()->routeIs('cities') ? 'menu-active' : '' }}">
                                 Wilayah
                             </a>
-                            <a href="{{ route('outlets') }}"
+                            <a wire:navigate href="{{ route('outlets') }}"
                                 class="submenu-item {{ request()->routeIs('outlets') ? 'menu-active' : '' }}">
                                 Outlet
                             </a>
-                            <a href="{{ route('vehicles') }}"
+                            <a wire:navigate href="{{ route('vehicles') }}"
                                 class="submenu-item {{ request()->routeIs('vehicles') ? 'menu-active' : '' }}">
                                 Armada
                             </a>
-                            <a href="{{ route('drivers') }}"
+                            <a wire:navigate href="{{ route('drivers') }}"
                                 class="submenu-item {{ request()->routeIs('drivers') ? 'menu-active' : '' }}">
                                 Supir
                             </a>
-                            <a href="{{ route('routes') }}"
+                            <a wire:navigate href="{{ route('routes') }}"
                                 class="submenu-item {{ request()->routeIs('routes') ? 'menu-active' : '' }}">
                                 Rute
                             </a>
-                            <a href="{{ route('trips') }}"
+                            <a wire:navigate href="{{ route('trips') }}"
                                 class="submenu-item {{ request()->routeIs('trips') ? 'menu-active' : '' }}">
                                 Jadwal
                             </a>
@@ -232,19 +231,19 @@
                         </button>
 
                         <div class="submenu" x-show="!sidebar.desktopCollapsed" x-cloak>
-                            <a href="{{ route('packages.statistics') }}"
+                            <a wire:navigate href="{{ route('packages.statistics') }}"
                                 class="submenu-item {{ request()->routeIs('packages.statistics') ? 'menu-active' : '' }}">
                                 Statistik
                             </a>
-                            <a href="{{ route('packages.settings') }}"
+                            <a wire:navigate href="{{ route('packages.settings') }}"
                                 class="submenu-item {{ request()->routeIs('packages.settings') ? 'menu-active' : '' }}">
                                 Pengaturan
                             </a>
-                            <a href="{{ route('packages') }}"
+                            <a wire:navigate href="{{ route('packages') }}"
                                 class="submenu-item {{ request()->routeIs('packages') ? 'menu-active' : '' }}">
                                 Semua Paket
                             </a>
-                            <a href="{{ route('packages.tracing') }}"
+                            <a wire:navigate href="{{ route('packages.tracing') }}"
                                 class="submenu-item {{ request()->routeIs('packages.tracing') ? 'menu-active' : '' }}">
                                 Tracing
                             </a>
@@ -254,21 +253,21 @@
                     {{-- =====================================================
                         BOOKING / LAPORAN / PENGATURAN
                     ===================================================== --}}
-                    <a href="{{ route('dashboard') }}"
+                    <a wire:navigate href="{{ route('dashboard') }}"
                         class="menu-item {{ request()->routeIs('booking.*') ? 'menu-active' : '' }}">
                         <span
                             class="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-slate-100 text-[10px] font-extrabold text-slate-500">B</span>
                         <span x-show="!sidebar.desktopCollapsed" x-cloak>Booking</span>
                     </a>
 
-                    <a href="{{ route('dashboard') }}"
+                    <a wire:navigate href="{{ route('dashboard') }}"
                         class="menu-item {{ request()->routeIs('laporan.*') ? 'menu-active' : '' }}">
                         <span
                             class="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-slate-100 text-[10px] font-extrabold text-slate-500">L</span>
                         <span x-show="!sidebar.desktopCollapsed" x-cloak>Laporan</span>
                     </a>
 
-                    <a href="{{ route('dashboard') }}"
+                    <a wire:navigate href="{{ route('dashboard') }}"
                         class="menu-item {{ request()->routeIs('pengaturan.*') ? 'menu-active' : '' }}">
                         <span
                             class="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-slate-100 text-[10px] font-extrabold text-slate-500">P</span>
