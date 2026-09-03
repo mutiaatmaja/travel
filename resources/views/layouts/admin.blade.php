@@ -212,7 +212,7 @@
                         PAKET
                     ===================================================== --}}
                     <div x-data="{
-                        open: {{ request()->routeIs(['packages.statistik', 'packages.pengaturan', 'packages.index', 'packages.tracing'])
+                        open: {{ request()->routeIs(['packages.statistics', 'packages.settings', 'packages', 'packages.tracing'])
                             ? 'true'
                             : 'false' }}
                     }" :class="open ? 'menu-open' : 'menu-closed'">
