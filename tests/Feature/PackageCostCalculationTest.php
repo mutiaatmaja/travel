@@ -38,8 +38,9 @@ class PackageCostCalculationTest extends TestCase
         $volumeSetting = PackageSetting::create([
             'name' => 'Tarif Volume Reguler',
             'pricing_type' => 'volume',
-            'rate_per_m3' => 450000,
-            'minimum_charge' => 80000,
+            'rate_per_kg' => 30000,
+            'volumetric_divisor' => 6000,
+            'minimum_charge' => 30000,
             'is_active' => true,
         ]);
 
@@ -48,13 +49,13 @@ class PackageCostCalculationTest extends TestCase
             'code' => 'PKG-002',
             'customer_name' => 'Sari',
             'weight_kg' => 5,
-            'length_cm' => 40,
-            'width_cm' => 30,
-            'height_cm' => 20,
+            'length_cm' => 100,
+            'width_cm' => 50,
+            'height_cm' => 50,
             'status' => 'pending',
             'description' => 'Barang volume besar',
         ]);
 
-        $this->assertSame(80000, $packageByVolume->calculateTotalCost());
+        $this->assertSame(1250000, $packageByVolume->calculateTotalCost());
     }
 }

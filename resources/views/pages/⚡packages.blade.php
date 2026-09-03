@@ -2,7 +2,6 @@
 
 use App\Models\Package;
 use App\Models\PackageSetting;
-use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -76,7 +75,6 @@ new #[Layout('layouts::admin')] class extends Component {
     {
         $this->validate([
             'packageSettingId' => ['required', 'exists:package_settings,id'],
-            'code' => ['required', 'max:100', Rule::unique('packages', 'code')->ignore($this->editingId)],
             'customerName' => ['required', 'max:255'],
             'weightKg' => ['required', 'numeric', 'min:0'],
             'lengthCm' => ['required', 'numeric', 'min:0'],
@@ -92,7 +90,6 @@ new #[Layout('layouts::admin')] class extends Component {
             ],
             [
                 'package_setting_id' => $this->packageSettingId,
-                'code' => strtoupper($this->code),
                 'customer_name' => $this->customerName,
                 'weight_kg' => $this->weightKg,
                 'length_cm' => $this->lengthCm,
@@ -234,33 +231,61 @@ new #[Layout('layouts::admin')] class extends Component {
                 <h2 class="text-xl font-extrabold">{{ $editingId ? 'Edit' : 'Tambah' }} Paket</h2>
                 <form wire:submit="save" class="mt-5 space-y-4">
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <select wire:model="packageSettingId" class="rounded-xl border px-4 py-3 text-sm">
-                            <option value="">Pilih pengaturan tarif</option>
-                            @foreach ($packageSettings as $setting)
-                                <option value="{{ $setting->id }}">{{ $setting->name }}</option>
-                            @endforeach
-                        </select>
+                        <div>
+                            <label class="mb-1 block text-sm font-semibold text-slate-700">Pengaturan tarif</label>
+                            <select wire:model="packageSettingId" class="w-full rounded-xl border px-4 py-3 text-sm">
+                                <option value="">Pilih pengaturan tarif</option>
+                                @foreach ($packageSettings as $setting)
+                                    <option value="{{ $setting->id }}">{{ $setting->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
 
-                        <input wire:model="code" placeholder="Kode paket" class="rounded-xl border px-4 py-3 text-sm">
-                        <input wire:model="customerName" placeholder="Nama pelanggan"
-                            class="rounded-xl border px-4 py-3 text-sm sm:col-span-2">
-                        <input wire:model="weightKg" type="number" step="0.01" min="0"
-                            placeholder="Berat (kg)" class="rounded-xl border px-4 py-3 text-sm">
-                        <input wire:model="lengthCm" type="number" step="0.01" min="0"
-                            placeholder="Panjang (cm)" class="rounded-xl border px-4 py-3 text-sm">
-                        <input wire:model="widthCm" type="number" step="0.01" min="0"
-                            placeholder="Lebar (cm)" class="rounded-xl border px-4 py-3 text-sm">
-                        <input wire:model="heightCm" type="number" step="0.01" min="0"
-                            placeholder="Tinggi (cm)" class="rounded-xl border px-4 py-3 text-sm">
-                        <select wire:model="status" class="rounded-xl border px-4 py-3 text-sm sm:col-span-2">
-                            <option value="pending">Pending</option>
-                            <option value="pickup">Pickup</option>
-                            <option value="in_transit">Dalam perjalanan</option>
-                            <option value="delivered">Terkirim</option>
-                            <option value="cancelled">Dibatalkan</option>
-                        </select>
-                        <textarea wire:model="description" rows="3" placeholder="Deskripsi paket"
-                            class="rounded-xl border px-4 py-3 text-sm sm:col-span-2"></textarea>
+                        <div>
+                            <label class="mb-1 block text-sm font-semibold text-slate-700">Nomor paket</label>
+                            <input wire:model="code" readonly placeholder="Dibuat otomatis saat disimpan"
+                                class="w-full rounded-xl border bg-slate-50 px-4 py-3 text-sm text-slate-500">
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="mb-1 block text-sm font-semibold text-slate-700">Nama pelanggan</label>
+                            <input wire:model="customerName" placeholder="Nama penerima atau pengirim"
+                                class="w-full rounded-xl border px-4 py-3 text-sm">
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-sm font-semibold text-slate-700">Berat (kg)</label>
+                            <input wire:model="weightKg" type="number" step="0.01" min="0" placeholder="0,00"
+                                class="w-full rounded-xl border px-4 py-3 text-sm">
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-sm font-semibold text-slate-700">Panjang (cm)</label>
+                            <input wire:model="lengthCm" type="number" step="0.01" min="0" placeholder="0,00"
+                                class="w-full rounded-xl border px-4 py-3 text-sm">
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-sm font-semibold text-slate-700">Lebar (cm)</label>
+                            <input wire:model="widthCm" type="number" step="0.01" min="0" placeholder="0,00"
+                                class="w-full rounded-xl border px-4 py-3 text-sm">
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-sm font-semibold text-slate-700">Tinggi (cm)</label>
+                            <input wire:model="heightCm" type="number" step="0.01" min="0" placeholder="0,00"
+                                class="w-full rounded-xl border px-4 py-3 text-sm">
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="mb-1 block text-sm font-semibold text-slate-700">Status paket</label>
+                            <select wire:model="status" class="w-full rounded-xl border px-4 py-3 text-sm">
+                                <option value="pending">Pending</option>
+                                <option value="pickup">Pickup</option>
+                                <option value="in_transit">Dalam perjalanan</option>
+                                <option value="delivered">Terkirim</option>
+                                <option value="cancelled">Dibatalkan</option>
+                            </select>
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="mb-1 block text-sm font-semibold text-slate-700">Deskripsi paket</label>
+                            <textarea wire:model="description" rows="3" placeholder="Tambahkan keterangan paket"
+                                class="w-full rounded-xl border px-4 py-3 text-sm"></textarea>
+                        </div>
                     </div>
 
                     <div class="rounded-xl border border-brand-100 bg-brand-50 p-3 text-sm">
@@ -280,6 +305,13 @@ new #[Layout('layouts::admin')] class extends Component {
 )
                                     Rp{{ number_format($estimated, 0, ',', '.') }}
                                 </p>
+                                @if ($selectedSetting->pricing_type === 'volume')
+                                    <p class="mt-1 text-xs text-slate-500">Berat volumetrik:
+                                        {{ number_format(($lengthCm * $widthCm * $heightCm) / max((int) ($selectedSetting->volumetric_divisor ?? 6000), 1), 2, ',', '.') }}
+                                        kg (dimensi /
+                                        {{ number_format((int) ($selectedSetting->volumetric_divisor ?? 6000), 0, ',', '.') }})
+                                    </p>
+                                @endif
                             @endif
                         @else
                             <p class="mt-1 text-slate-500">Pilih pengaturan tarif untuk melihat estimasi biaya.</p>

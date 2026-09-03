@@ -27,13 +27,14 @@ class PackageSettingsTest extends TestCase
             'pricing_type' => 'volume',
             'rate_per_kg' => null,
             'rate_per_m3' => 450000,
+            'volumetric_divisor' => 6000,
             'minimum_charge' => 80000,
             'description' => 'Tarif volume untuk pengiriman ekspres',
             'is_active' => true,
         ]);
 
         $this->assertDatabaseHas('package_settings', ['name' => 'Tarif Reguler', 'pricing_type' => 'weight', 'rate_per_kg' => 12000]);
-        $this->assertDatabaseHas('package_settings', ['name' => 'Volume Express', 'pricing_type' => 'volume', 'rate_per_m3' => 450000]);
+        $this->assertDatabaseHas('package_settings', ['name' => 'Volume Express', 'pricing_type' => 'volume', 'volumetric_divisor' => 6000]);
         $this->assertSame(2, PackageSetting::count());
     }
 }

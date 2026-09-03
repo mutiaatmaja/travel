@@ -40,6 +40,8 @@
         };
     </script>
 
+    <link rel="stylesheet" href="{{ asset('css/admin-sidebar.css') }}">
+
     <style>
         [x-cloak] {
             display: none !important;
@@ -63,17 +65,7 @@
             background: #f8fafc;
         }
     </style>
-
-    <script>
-        // Registered once; state then survives Livewire's SPA-style page navigations.
-        document.addEventListener('alpine:init', () => {
-            Alpine.store('sidebar', {
-                open: false,
-                masterOpen: true,
-                paketOpen: true,
-            });
-        });
-    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
     @livewireStyles
 </head>
@@ -84,124 +76,282 @@
         'section' => $section ?? 'Overview',
     ])
 
-    <div x-data class="h-screen bg-slate-50">
-        <div x-show="$store.sidebar.open" x-cloak @click="$store.sidebar.open = false"
+    {{-- sidebar.open & desktopCollapsed murni state UI (bukan status "aktif"), jadi tetap Alpine --}}
+    <div x-data="{ sidebar: { open: false, desktopCollapsed: false } }" class="h-screen bg-slate-50">
+
+        <!-- Mobile overlay -->
+        <div x-show="sidebar.open" x-cloak @click="sidebar.open = false"
             class="fixed inset-0 z-40 bg-slate-900/40 lg:hidden">
         </div>
 
         <aside
-            class="fixed inset-y-0 left-0 z-50 flex h-screen w-72 flex-col overflow-hidden border-r border-slate-200 bg-white transition-transform duration-300 lg:translate-x-0"
-            :class="$store.sidebar.open ? 'translate-x-0' : '-translate-x-full'">
-            <div class="flex h-20 items-center justify-between border-b border-slate-100 px-6">
-                <a href="{{ route('home') }}" wire:navigate class="flex items-center gap-2">
+            class="admin-sidebar fixed inset-y-0 left-0 z-50 flex h-screen flex-col overflow-hidden border-r border-slate-200 bg-white transition-all duration-300"
+            :class="[
+                sidebar.open ? 'translate-x-0' : '-translate-x-full',
+                'lg:translate-x-0',
+                sidebar.desktopCollapsed ? 'lg:w-24' : 'lg:w-72',
+                'w-72'
+            ]">
+
+            <!-- Logo -->
+            <div class="flex h-20 items-center justify-between border-b border-slate-100 px-4 lg:px-3">
+                <a href="{{ route('dashboard') }}" class="flex items-center gap-2">
                     <img src="{{ asset('asetgambar/logo.png') }}" alt="TransGo"
-                        class="h-10 w-10 rounded-xl object-cover">
-                    <span class="text-lg font-extrabold tracking-tight text-slate-900">Trans<span
-                            class="text-brand-500">Go</span></span>
+                        class="h-10 w-10 shrink-0 rounded-xl object-cover">
+
+                    <span class="text-lg font-extrabold tracking-tight text-slate-900"
+                        x-show="!sidebar.desktopCollapsed" x-cloak>
+                        Trans<span class="text-brand-500">Go</span>
+                    </span>
                 </a>
-                <button type="button" @click="$store.sidebar.open = false"
-                    class="rounded-lg p-2 text-slate-400 hover:bg-slate-50 lg:hidden" aria-label="Tutup sidebar"><svg
-                        class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+
+                <!-- Mobile Close Button -->
+                <button type="button" @click="sidebar.open = false"
+                    class="rounded-lg p-2 text-slate-400 hover:bg-slate-50 lg:hidden" aria-label="Tutup sidebar">
+                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M6 6l12 12M18 6L6 18" />
-                    </svg></button>
+                    </svg>
+                </button>
             </div>
 
-            @persist('admin-sidebar-nav')
-                <nav
-                    class="admin-sidebar-scroll h-[calc(100vh-8rem)] min-h-0 flex-none overflow-y-scroll overscroll-contain px-4 py-6">
-                    <p class="px-3 text-[11px] font-bold uppercase tracking-widest text-slate-400">Menu utama</p>
-                    <div class="mt-3 space-y-1">
-                        <a href="{{ route('dashboard') }}" wire:navigate
-                            class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold hover:bg-brand-50 hover:text-brand-600 {{ request()->routeIs('dashboard') ? 'bg-brand-50 text-brand-700' : 'text-slate-600' }}"><svg
-                                class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <rect width="7" height="7" x="3" y="3" rx="1" />
-                                <rect width="7" height="7" x="14" y="3" rx="1" />
-                                <rect width="7" height="7" x="14" y="14" rx="1" />
-                                <rect width="7" height="7" x="3" y="14" rx="1" />
-                            </svg>Dashboard</a>
-                        <button type="button" @click="$store.sidebar.masterOpen = !$store.sidebar.masterOpen"
-                            class="flex w-full items-center justify-between rounded-xl px-3 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-brand-600"><span
-                                class="flex items-center gap-3"><svg class="h-5 w-5" viewBox="0 0 24 24" fill="none"
-                                    stroke="currentColor" stroke-width="2">
+            <!-- Navigation -->
+            <nav
+                class="admin-sidebar-scroll h-[calc(100vh-8rem)] min-h-0 flex-none overflow-y-auto overscroll-contain px-3 py-6">
+
+                <!-- Section Title -->
+                <p class="px-3 text-[11px] font-bold uppercase tracking-widest text-slate-400"
+                    x-show="!sidebar.desktopCollapsed" x-cloak>
+                    Menu utama
+                </p>
+
+                <div class="mt-3 space-y-1">
+
+                    {{-- =====================================================
+                        DASHBOARD
+                    ===================================================== --}}
+                    <a href="{{ route('dashboard') }}"
+                        class="menu-item {{ request()->routeIs('dashboard') ? 'menu-active' : '' }}">
+                        <svg class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <rect width="7" height="7" x="3" y="3" rx="1" />
+                            <rect width="7" height="7" x="14" y="3" rx="1" />
+                            <rect width="7" height="7" x="14" y="14" rx="1" />
+                            <rect width="7" height="7" x="3" y="14" rx="1" />
+                        </svg>
+                        <span x-show="!sidebar.desktopCollapsed" x-cloak>Dashboard</span>
+                    </a>
+
+                    {{-- =====================================================
+                        MASTER DATA
+                    ===================================================== --}}
+                    <div x-data="{
+                        open: {{ request()->routeIs([
+                            'users',
+                            'roles-permissions',
+                            'permissions',
+                            'wilayah.*',
+                            'outlet.*',
+                            'armada.*',
+                            'supir.*',
+                            'rute.*',
+                            'jadwal.*',
+                        ])
+                            ? 'true'
+                            : 'false' }}
+                    }" :class="open ? 'menu-open' : 'menu-closed'">
+                        <button type="button" class="menu-parent" @click="open = !open">
+                            <span class="flex items-center gap-3">
+                                <svg class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
                                     <path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z" />
-                                </svg>Master Data</span><svg class="h-4 w-4 transition-transform"
-                                :class="$store.sidebar.masterOpen ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2">
+                                </svg>
+                                <span x-show="!sidebar.desktopCollapsed" x-cloak>Master Data</span>
+                            </span>
+                            <svg class="menu-arrow h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" x-show="!sidebar.desktopCollapsed" x-cloak>
                                 <path d="m6 9 6 6 6-6" />
-                            </svg></button>
-                        <div x-show="$store.sidebar.masterOpen" class="ml-5 border-l border-slate-200 pl-4">
-                            @foreach ([['label' => 'Users', 'href' => route('users')], ['label' => 'Role & Permission', 'href' => route('roles-permissions')], ['label' => 'Wilayah', 'href' => route('cities')], ['label' => 'Outlet', 'href' => route('outlets')], ['label' => 'Armada', 'href' => route('vehicles')], ['label' => 'Supir', 'href' => route('drivers')], ['label' => 'Rute', 'href' => route('routes')], ['label' => 'Jadwal', 'href' => route('trips')]] as $menu)
-                                <a href="{{ $menu['href'] }}" wire:navigate
-                                    class="block rounded-lg px-3 py-2 text-sm {{ request()->url() === $menu['href'] ? 'bg-brand-50 font-bold text-brand-700' : 'text-slate-500 hover:bg-brand-50 hover:text-brand-600' }}">{{ $menu['label'] }}</a>
-                            @endforeach
+                            </svg>
+                        </button>
+
+                        <div class="submenu" x-show="!sidebar.desktopCollapsed" x-cloak>
+                            <a href="{{ route('users') }}"
+                                class="submenu-item {{ request()->routeIs('users') ? 'menu-active' : '' }}">
+                                Users
+                            </a>
+                            <a href="{{ route('roles-permissions') }}"
+                                class="submenu-item {{ request()->routeIs('roles-permissions') ? 'menu-active' : '' }}">
+                                Role & Permission
+                            </a>
+                            <a href="{{ route('cities') }}"
+                                class="submenu-item {{ request()->routeIs('cities.*') ? 'menu-active' : '' }}">
+                                Wilayah
+                            </a>
+                            <a href="{{ route('outlets') }}"
+                                class="submenu-item {{ request()->routeIs('outlets') ? 'menu-active' : '' }}">
+                                Outlet
+                            </a>
+                            <a href="{{ route('vehicles') }}"
+                                class="submenu-item {{ request()->routeIs('vehicles') ? 'menu-active' : '' }}">
+                                Armada
+                            </a>
+                            <a href="{{ route('drivers') }}"
+                                class="submenu-item {{ request()->routeIs('drivers') ? 'menu-active' : '' }}">
+                                Supir
+                            </a>
+                            <a href="{{ route('routes') }}"
+                                class="submenu-item {{ request()->routeIs('routes') ? 'menu-active' : '' }}">
+                                Rute
+                            </a>
+                            <a href="{{ route('trips') }}"
+                                class="submenu-item {{ request()->routeIs('trips') ? 'menu-active' : '' }}">
+                                Jadwal
+                            </a>
                         </div>
-                        <button type="button" @click="$store.sidebar.paketOpen = !$store.sidebar.paketOpen"
-                            class="flex w-full items-center justify-between rounded-xl px-3 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-brand-600"><span
-                                class="flex items-center gap-3"><svg class="h-5 w-5" viewBox="0 0 24 24" fill="none"
+                    </div>
+
+                    {{-- =====================================================
+                        PAKET
+                    ===================================================== --}}
+                    <div x-data="{
+                        open: {{ request()->routeIs(['packages.statistik', 'packages.pengaturan', 'packages.index', 'packages.tracing'])
+                            ? 'true'
+                            : 'false' }}
+                    }" :class="open ? 'menu-open' : 'menu-closed'">
+                        <button type="button" class="menu-parent" @click="open = !open">
+                            <span class="flex items-center gap-3">
+                                <svg class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none"
                                     stroke="currentColor" stroke-width="2">
                                     <path d="M21 8l-9-5-9 5 9 5 9-5Zm0 0v8l-9 5m0-8v8m0-8L3 8m9 5-9-5" />
-                                </svg>Paket</span><svg class="h-4 w-4 transition-transform"
-                                :class="$store.sidebar.paketOpen ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2">
+                                </svg>
+                                <span x-show="!sidebar.desktopCollapsed" x-cloak>Paket</span>
+                            </span>
+                            <svg class="menu-arrow h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" x-show="!sidebar.desktopCollapsed" x-cloak>
                                 <path d="m6 9 6 6 6-6" />
-                            </svg></button>
-                        <div x-show="$store.sidebar.paketOpen" class="ml-5 border-l border-slate-200 pl-4">
-                            @foreach ([['label' => 'Statistik', 'href' => route('packages.statistics')], ['label' => 'Pengaturan', 'href' => route('packages.settings')], ['label' => 'Semua Paket', 'href' => route('packages')], ['label' => 'Tracing', 'href' => '#']] as $menu)
-                                <a href="{{ $menu['href'] }}" @if ($menu['label'] === 'Statistik' || $menu['label'] === 'Pengaturan' || $menu['label'] === 'Semua Paket') wire:navigate @endif
-                                    class="block rounded-lg px-3 py-2 text-sm {{ request()->url() === $menu['href'] ? 'bg-brand-50 font-bold text-brand-700' : 'text-slate-500 hover:bg-brand-50 hover:text-brand-600' }}">{{ $menu['label'] }}</a>
-                            @endforeach
-                        </div>
-                        @foreach (['Booking', 'Laporan', 'Pengaturan'] as $menu)
-                            <a href="#"
-                                class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-brand-600"><span
-                                    class="flex h-5 w-5 items-center justify-center rounded-md bg-slate-100 text-[10px] font-extrabold text-slate-500">{{ substr($menu, 0, 1) }}</span>{{ $menu }}</a>
-                        @endforeach
-                    </div>
-                </nav>
-            @endpersist
+                            </svg>
+                        </button>
 
+                        <div class="submenu" x-show="!sidebar.desktopCollapsed" x-cloak>
+                            <a href="{{ route('packages.statistics') }}"
+                                class="submenu-item {{ request()->routeIs('packages.statistics') ? 'menu-active' : '' }}">
+                                Statistik
+                            </a>
+                            <a href="{{ route('packages.settings') }}"
+                                class="submenu-item {{ request()->routeIs('packages.settings') ? 'menu-active' : '' }}">
+                                Pengaturan
+                            </a>
+                            <a href="{{ route('packages') }}"
+                                class="submenu-item {{ request()->routeIs('packages') ? 'menu-active' : '' }}">
+                                Semua Paket
+                            </a>
+                            <a href="{{ route('packages.tracing') }}"
+                                class="submenu-item {{ request()->routeIs('packages.tracing') ? 'menu-active' : '' }}">
+                                Tracing
+                            </a>
+                        </div>
+                    </div>
+
+                    {{-- =====================================================
+                        BOOKING / LAPORAN / PENGATURAN
+                    ===================================================== --}}
+                    <a href="{{ route('dashboard') }}"
+                        class="menu-item {{ request()->routeIs('booking.*') ? 'menu-active' : '' }}">
+                        <span
+                            class="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-slate-100 text-[10px] font-extrabold text-slate-500">B</span>
+                        <span x-show="!sidebar.desktopCollapsed" x-cloak>Booking</span>
+                    </a>
+
+                    <a href="{{ route('dashboard') }}"
+                        class="menu-item {{ request()->routeIs('laporan.*') ? 'menu-active' : '' }}">
+                        <span
+                            class="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-slate-100 text-[10px] font-extrabold text-slate-500">L</span>
+                        <span x-show="!sidebar.desktopCollapsed" x-cloak>Laporan</span>
+                    </a>
+
+                    <a href="{{ route('dashboard') }}"
+                        class="menu-item {{ request()->routeIs('pengaturan.*') ? 'menu-active' : '' }}">
+                        <span
+                            class="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-slate-100 text-[10px] font-extrabold text-slate-500">P</span>
+                        <span x-show="!sidebar.desktopCollapsed" x-cloak>Pengaturan</span>
+                    </a>
+
+                </div>
+            </nav>
+
+            <!-- User Profile -->
             <div class="border-t border-slate-100 p-4">
-                <div class="flex items-center gap-3 rounded-xl bg-slate-50 p-3"><img
-                        src="https://i.pravatar.cc/80?img=12" alt="Avatar {{ auth()->user()->name }}"
-                        class="h-9 w-9 rounded-full object-cover">
-                    <div class="min-w-0 flex-1">
-                        <p class="truncate text-sm font-bold text-slate-800">{{ auth()->user()->name }}</p>
-                        <p class="truncate text-xs text-slate-500">{{ auth()->user()->email }}</p>
-                    </div><button type="button" wire:click="logout" wire:loading.attr="disabled"
-                        class="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
-                        aria-label="Keluar"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2">
+                <div class="flex items-center gap-3 rounded-xl bg-slate-50 p-3">
+
+                    <img src="https://i.pravatar.cc/80?img=12" alt="Avatar Admin"
+                        class="h-9 w-9 shrink-0 rounded-full object-cover">
+
+                    <div class="min-w-0 flex-1" x-show="!sidebar.desktopCollapsed" x-cloak>
+                        <p class="truncate text-sm font-bold text-slate-800">
+                            {{ auth()->user()->name ?? 'Admin TransGo' }}
+                        </p>
+
+                        <p class="truncate text-xs text-slate-500">
+                            {{ auth()->user()->email ?? 'admin@transgo.com' }}
+                        </p>
+                    </div>
+
+                    <!-- Logout -->
+                    <button type="button" class="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600"
+                        aria-label="Keluar">
+                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
                             <path d="M10 17l5-5-5-5M15 12H3" />
                             <path d="M21 19V5a2 2 0 0 0-2-2h-6" />
-                        </svg></button>
+                        </svg>
+                    </button>
+
                 </div>
             </div>
+
         </aside>
 
-        <div class="flex h-screen flex-col lg:pl-72">
+
+        <div class="flex h-screen flex-col transition-all duration-300 lg:pl-72"
+            :class="sidebar.desktopCollapsed ? 'lg:pl-24' : 'lg:pl-72'">
             <header
                 class="sticky top-0 z-30 flex h-20 shrink-0 items-center justify-between border-b border-slate-200 bg-white/90 px-4 backdrop-blur sm:px-6 lg:px-8">
-                <div class="flex items-center gap-3"><button type="button" @click="$store.sidebar.open = true"
+                <div class="flex items-center gap-3">
+                    <button type="button" @click="sidebar.open = true"
                         class="rounded-xl border border-slate-200 p-2.5 text-slate-600 hover:bg-slate-50 lg:hidden"
-                        aria-label="Buka sidebar"><svg class="h-5 w-5" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2">
+                        aria-label="Buka sidebar">
+                        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
                             <path d="M4 6h16M4 12h16M4 18h16" />
-                        </svg></button>
+                        </svg>
+                    </button>
+                    <button type="button" @click="sidebar.desktopCollapsed = !sidebar.desktopCollapsed"
+                        class="hidden rounded-xl border border-slate-200 p-2.5 text-slate-600 hover:bg-slate-50 lg:inline-flex"
+                        aria-label="Collapse sidebar">
+                        <svg class="h-5 w-5 transition-transform duration-300" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2"
+                            :class="sidebar.desktopCollapsed ? 'rotate-180' : ''">
+                            <path d="M15 18l-6-6 6-6" />
+                        </svg>
+                    </button>
                     <div>
                         <p class="text-xs font-semibold uppercase tracking-wider text-brand-600">{{ $section }}
                         </p>
                         <h1 class="text-lg font-extrabold text-slate-900 sm:text-xl">{{ $title }}</h1>
                     </div>
-                </div><button type="button" wire:click="logout" wire:loading.attr="disabled"
-                    class="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-red-50 hover:text-red-600 disabled:opacity-50"><svg
-                        class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                </div>
+                <button type="button" wire:click="logout" wire:loading.attr="disabled"
+                    class="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-red-50 hover:text-red-600 disabled:opacity-50">
+                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M10 17l5-5-5-5M15 12H3" />
                         <path d="M21 19V5a2 2 0 0 0-2-2h-6" />
-                    </svg><span wire:loading.remove wire:target="logout">Keluar</span><span wire:loading
-                        wire:target="logout">Keluar...</span></button>
+                    </svg>
+                    <span wire:loading.remove wire:target="logout">Keluar</span>
+                    <span wire:loading wire:target="logout">Keluar...</span>
+                </button>
             </header>
             <main class="mx-auto min-h-0 w-full max-w-7xl flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 lg:p-8">
-                {{ $slot }}</main>
+                {{ $slot }}
+            </main>
         </div>
     </div>
 

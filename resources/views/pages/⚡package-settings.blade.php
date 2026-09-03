@@ -31,6 +31,8 @@ new #[Layout('layouts::admin')] class extends Component {
 
     public int $ratePerM3 = 0;
 
+    public int $volumetricDivisor = 6000;
+
     public int $minimumCharge = 0;
 
     public string $description = '';
@@ -55,8 +57,9 @@ new #[Layout('layouts::admin')] class extends Component {
         $this->editingId = $id;
         $this->name = $setting->name;
         $this->pricingType = $setting->pricing_type;
-        $this->ratePerKg = (int) ($setting->rate_per_kg ?? 0);
+        $this->ratePerKg = (int) ($setting->rate_per_kg ?? ($setting->rate_per_m3 ?? 0));
         $this->ratePerM3 = (int) ($setting->rate_per_m3 ?? 0);
+        $this->volumetricDivisor = (int) ($setting->volumetric_divisor ?? 6000);
         $this->minimumCharge = (int) $setting->minimum_charge;
         $this->description = $setting->description ?? '';
         $this->isActive = (bool) $setting->is_active;
@@ -72,13 +75,13 @@ new #[Layout('layouts::admin')] class extends Component {
             'pricingType' => ['required', 'in:weight,volume'],
             'ratePerKg' => ['nullable', 'integer', 'min:0'],
             'ratePerM3' => ['nullable', 'integer', 'min:0'],
+            'volumetricDivisor' => ['required', 'integer', 'min:1'],
             'minimumCharge' => ['required', 'integer', 'min:0'],
             'description' => ['nullable', 'string'],
         ]);
 
         $this->validate([
-            'ratePerKg' => ['required_if:pricingType,weight', 'integer', 'min:0'],
-            'ratePerM3' => ['required_if:pricingType,volume', 'integer', 'min:0'],
+            'ratePerKg' => ['required', 'integer', 'min:0'],
         ]);
 
         PackageSetting::updateOrCreate(
@@ -88,8 +91,9 @@ new #[Layout('layouts::admin')] class extends Component {
             [
                 'name' => $this->name,
                 'pricing_type' => $this->pricingType,
-                'rate_per_kg' => $this->pricingType === 'weight' ? $this->ratePerKg : null,
-                'rate_per_m3' => $this->pricingType === 'volume' ? $this->ratePerM3 : null,
+                'rate_per_kg' => $this->ratePerKg,
+                'rate_per_m3' => null,
+                'volumetric_divisor' => $this->volumetricDivisor,
                 'minimum_charge' => $this->minimumCharge,
                 'description' => $this->description,
                 'is_active' => $this->isActive,
@@ -126,10 +130,11 @@ new #[Layout('layouts::admin')] class extends Component {
 
     private function resetForm(): void
     {
-        $this->reset(['modalOpen', 'editingId', 'deleteId', 'name', 'pricingType', 'ratePerKg', 'ratePerM3', 'minimumCharge', 'description', 'isActive']);
+        $this->reset(['modalOpen', 'editingId', 'deleteId', 'name', 'pricingType', 'ratePerKg', 'ratePerM3', 'volumetricDivisor', 'minimumCharge', 'description', 'isActive']);
         $this->pricingType = 'weight';
         $this->ratePerKg = 0;
         $this->ratePerM3 = 0;
+        $this->volumetricDivisor = 6000;
         $this->minimumCharge = 0;
         $this->description = '';
         $this->isActive = true;
@@ -180,6 +185,7 @@ new #[Layout('layouts::admin')] class extends Component {
                         <th class="px-6 py-4">Nama</th>
                         <th class="px-6 py-4">Tipe</th>
                         <th class="px-6 py-4">Tarif</th>
+                        <th class="px-6 py-4">Faktor pembagi</th>
                         <th class="px-6 py-4">Minimum</th>
                         <th class="px-6 py-4">Status</th>
                         <th class="px-6 py-4 text-right">Aksi</th>
@@ -198,9 +204,12 @@ new #[Layout('layouts::admin')] class extends Component {
                                 @if ($setting->pricing_type === 'weight')
                                     Rp{{ number_format((int) ($setting->rate_per_kg ?? 0), 0, ',', '.') }} / kg
                                 @else
-                                    Rp{{ number_format((int) ($setting->rate_per_m3 ?? 0), 0, ',', '.') }} / m3
+                                    Rp{{ number_format((int) ($setting->rate_per_kg ?? ($setting->rate_per_m3 ?? 0)), 0, ',', '.') }}
+                                    / kg volumetrik
                                 @endif
                             </td>
+                            <td class="px-6 py-4">
+                                {{ number_format((int) ($setting->volumetric_divisor ?? 6000), 0, ',', '.') }}</td>
                             <td class="px-6 py-4">Rp{{ number_format((int) $setting->minimum_charge, 0, ',', '.') }}
                             </td>
                             <td class="px-6 py-4">
@@ -218,7 +227,7 @@ new #[Layout('layouts::admin')] class extends Component {
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-6 py-12 text-center text-slate-500">Belum ada pengaturan paket.
+                            <td colspan="7" class="px-6 py-12 text-center text-slate-500">Belum ada pengaturan paket.
                             </td>
                         </tr>
                     @endforelse
@@ -269,9 +278,16 @@ new #[Layout('layouts::admin')] class extends Component {
                             </div>
                         @else
                             <div>
-                                <label class="mb-1 block text-sm font-semibold text-slate-700">Tarif per m3</label>
-                                <input wire:model="ratePerM3" type="number" min="0" step="1000"
-                                    placeholder="450000" class="w-full rounded-xl border px-4 py-3 text-sm">
+                                <label class="mb-1 block text-sm font-semibold text-slate-700">Tarif per kg
+                                    volumetrik</label>
+                                <input wire:model="ratePerKg" type="number" min="0" step="1000"
+                                    placeholder="30000" class="w-full rounded-xl border px-4 py-3 text-sm">
+                            </div>
+                            <div>
+                                <label class="mb-1 block text-sm font-semibold text-slate-700">Faktor pembagi</label>
+                                <input wire:model="volumetricDivisor" type="number" min="1" step="1"
+                                    placeholder="6000" class="w-full rounded-xl border px-4 py-3 text-sm">
+                                <p class="mt-1 text-xs text-slate-500">Panjang × lebar × tinggi ÷ faktor pembagi</p>
                             </div>
                             <div>
                                 <label class="mb-1 block text-sm font-semibold text-slate-700">Minimum charge</label>

@@ -38,3 +38,7 @@ Route::livewire('/packages/settings', 'pages::package-settings')
 Route::livewire('/packages', 'pages::packages')
     ->middleware('auth')
     ->name('packages');
+
+Route::livewire('/packages/tracing', 'pages::package-tracing')
+    ->middleware('auth')
+    ->name('packages.tracing');
