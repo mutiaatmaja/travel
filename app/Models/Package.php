@@ -48,7 +48,9 @@ class Package extends Model
 
     public function calculateTotalCost(): int
     {
-        $setting = $this->packageSetting;
+        $setting = $this->relationLoaded('packageSetting')
+            ? $this->packageSetting
+            : PackageSetting::find($this->package_setting_id);
 
         if (! $setting) {
             return 0;
