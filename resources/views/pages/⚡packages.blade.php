@@ -233,7 +233,8 @@ new #[Layout('layouts::admin')] class extends Component {
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div>
                             <label class="mb-1 block text-sm font-semibold text-slate-700">Pengaturan tarif</label>
-                            <select wire:model.live="packageSettingId" class="w-full rounded-xl border px-4 py-3 text-sm">
+                            <select wire:model.live="packageSettingId"
+                                class="w-full rounded-xl border px-4 py-3 text-sm">
                                 <option value="">Pilih pengaturan tarif</option>
                                 @foreach ($packageSettings as $setting)
                                     <option value="{{ $setting->id }}">{{ $setting->name }}</option>
@@ -253,23 +254,23 @@ new #[Layout('layouts::admin')] class extends Component {
                         </div>
                         <div>
                             <label class="mb-1 block text-sm font-semibold text-slate-700">Berat (kg)</label>
-                            <input wire:model.live="weightKg" type="number" step="0.01" min="0" placeholder="0,00"
-                                class="w-full rounded-xl border px-4 py-3 text-sm">
+                            <input wire:model.live="weightKg" type="number" step="0.01" min="0"
+                                placeholder="0,00" class="w-full rounded-xl border px-4 py-3 text-sm">
                         </div>
                         <div>
                             <label class="mb-1 block text-sm font-semibold text-slate-700">Panjang (cm)</label>
-                            <input wire:model.live="lengthCm" type="number" step="0.01" min="0" placeholder="0,00"
-                                class="w-full rounded-xl border px-4 py-3 text-sm">
+                            <input wire:model.live="lengthCm" type="number" step="0.01" min="0"
+                                placeholder="0,00" class="w-full rounded-xl border px-4 py-3 text-sm">
                         </div>
                         <div>
                             <label class="mb-1 block text-sm font-semibold text-slate-700">Lebar (cm)</label>
-                            <input wire:model.live="widthCm" type="number" step="0.01" min="0" placeholder="0,00"
-                                class="w-full rounded-xl border px-4 py-3 text-sm">
+                            <input wire:model.live="widthCm" type="number" step="0.01" min="0"
+                                placeholder="0,00" class="w-full rounded-xl border px-4 py-3 text-sm">
                         </div>
                         <div>
                             <label class="mb-1 block text-sm font-semibold text-slate-700">Tinggi (cm)</label>
-                            <input wire:model.live="heightCm" type="number" step="0.01" min="0" placeholder="0,00"
-                                class="w-full rounded-xl border px-4 py-3 text-sm">
+                            <input wire:model.live="heightCm" type="number" step="0.01" min="0"
+                                placeholder="0,00" class="w-full rounded-xl border px-4 py-3 text-sm">
                         </div>
                         <div class="sm:col-span-2">
                             <label class="mb-1 block text-sm font-semibold text-slate-700">Status paket</label>
