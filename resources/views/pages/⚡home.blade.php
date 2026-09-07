@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\City;
+use App\Models\Package;
 use App\Models\TravelRoute;
 use Livewire\Component;
 
@@ -15,6 +16,13 @@ new class extends Component {
 
     public bool $mobileMenuOpen = false;
 
+    public string $trackingNumber = '';
+
+    public ?int $trackedPackageId = null;
+
+    /** @var array{code: string, customer: string, status: string, events: array<int, array{status: string, location: string, description: ?string, occurred_at: string}}|null */
+    public ?array $trackingResult = null;
+
     /** @var array<int, string> */
     public array $cities = [];
 
@@ -23,6 +31,43 @@ new class extends Component {
 
     /** @var array<int, array{from: string, to: string, price: string, duration: string, date: string}> */
     public array $routeResults = [];
+
+    public function trackPackage(): void
+    {
+        $this->validate([
+            'trackingNumber' => ['required', 'string', 'max:50'],
+        ], [
+            'trackingNumber.required' => 'Nomor paket harus diisi.',
+        ]);
+
+        $package = Package::query()
+            ->with('trackingEvents')
+            ->whereRaw('LOWER(code) = ?', [strtolower(trim($this->trackingNumber))])
+            ->first();
+
+        if (! $package) {
+            $this->trackedPackageId = null;
+            $this->trackingResult = null;
+            $this->addError('trackingNumber', 'Nomor paket tidak ditemukan. Periksa kembali nomor paket Anda.');
+
+            return;
+        }
+
+        $this->trackingNumber = $package->code;
+        $this->trackedPackageId = $package->id;
+        $this->trackingResult = [
+            'code' => $package->code,
+            'customer' => $package->customer_name,
+            'status' => $package->status,
+            'events' => $package->trackingEvents->map(fn ($event): array => [
+                'status' => $event->status,
+                'location' => $event->location,
+                'description' => $event->description,
+                'occurred_at' => $event->occurred_at->format('d M Y, H:i'),
+            ])->all(),
+        ];
+        $this->resetValidation();
+    }
 
     public function mount(): void
     {
@@ -344,6 +389,67 @@ new class extends Component {
                         </div>
                     </div>
                 </form>
+
+                <div id="tracking" class="mt-5 rounded-2xl bg-slate-950 p-4 text-left shadow-xl shadow-brand-900/20 sm:p-6">
+                    <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                        <div>
+                            <p class="text-xs font-bold uppercase tracking-widest text-brand-300">Lacak paket</p>
+                            <h2 class="mt-2 text-xl font-extrabold text-white sm:text-2xl">Cek status kirimanmu</h2>
+                            <p class="mt-2 text-sm text-slate-300">Masukkan nomor paket untuk melihat status terakhir dan riwayat perjalanannya.</p>
+                        </div>
+                        <form wire:submit="trackPackage" class="flex w-full flex-col gap-2 sm:flex-row lg:max-w-xl">
+                            <div class="min-w-0 flex-1">
+                                <label for="tracking-number" class="sr-only">Nomor paket</label>
+                                <input id="tracking-number" wire:model="trackingNumber" placeholder="Contoh: PKG-20260901-ABC123"
+                                    class="w-full rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-sm text-white placeholder:text-slate-400 focus:border-brand-300 focus:outline-none focus:ring-2 focus:ring-brand-300/30">
+                                @error('trackingNumber')
+                                    <p class="mt-1 text-xs text-red-300">{{ $message }}</p>
+                                @enderror
+                            </div>
+                            <button type="submit" wire:loading.attr="disabled"
+                                class="rounded-xl bg-brand-500 px-5 py-3 text-sm font-bold text-white transition hover:bg-brand-400 disabled:opacity-60">
+                                <span wire:loading.remove wire:target="trackPackage">Lacak paket</span>
+                                <span wire:loading wire:target="trackPackage">Mencari...</span>
+                            </button>
+                        </form>
+                    </div>
+
+                    @if ($trackingResult)
+                        <div class="mt-5 rounded-xl bg-white p-4 text-slate-800 sm:p-5">
+                            <div class="flex flex-col gap-3 border-b border-slate-100 pb-4 sm:flex-row sm:items-start sm:justify-between">
+                                <div>
+                                    <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Nomor paket</p>
+                                    <p class="mt-1 text-lg font-extrabold text-slate-900">{{ $trackingResult['code'] }}</p>
+                                    <p class="mt-1 text-sm text-slate-500">Penerima: {{ $trackingResult['customer'] }}</p>
+                                </div>
+                                <span class="w-fit rounded-full bg-brand-50 px-3 py-1.5 text-xs font-bold text-brand-700">
+                                    {{ ucfirst(str_replace('_', ' ', $trackingResult['status'])) }}
+                                </span>
+                            </div>
+
+                            <div class="mt-4">
+                                <p class="text-sm font-extrabold text-slate-900">Riwayat perjalanan</p>
+                                @if ($trackingResult['events'] !== [])
+                                    <div class="mt-4 space-y-4">
+                                        @foreach ($trackingResult['events'] as $event)
+                                            <div class="relative border-l-2 border-brand-200 pl-4">
+                                                <span class="absolute -left-[7px] top-1 h-3 w-3 rounded-full bg-brand-500 ring-4 ring-white"></span>
+                                                <p class="font-bold text-slate-900">{{ ucfirst(str_replace('_', ' ', $event['status'])) }}</p>
+                                                <p class="text-sm font-medium text-brand-700">{{ $event['location'] }}</p>
+                                                <p class="mt-1 text-xs text-slate-400">{{ $event['occurred_at'] }}</p>
+                                                @if ($event['description'])
+                                                    <p class="mt-1 text-sm text-slate-600">{{ $event['description'] }}</p>
+                                                @endif
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @else
+                                    <p class="mt-2 text-sm text-slate-500">Belum ada riwayat perjalanan. Status paket saat ini masih {{ strtolower(str_replace('_', ' ', $trackingResult['status'])) }}.</p>
+                                @endif
+                            </div>
+                        </div>
+                    @endif
+                </div>
             </div>
         </section>
 
