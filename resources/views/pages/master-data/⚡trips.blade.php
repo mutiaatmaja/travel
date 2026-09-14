@@ -91,7 +91,7 @@ new #[Layout('layouts::admin')] class extends Component {
     }
     public function render(): mixed
     {
-        return view('pages.⚡trips', [
+        return view('pages.master-data.⚡trips', [
             'trips' => Trip::with(['travelRoute.originCity', 'travelRoute.destinationCity', 'vehicle', 'driver'])
                 ->when($this->search !== '', fn($q) => $q->whereHas('travelRoute', fn($route) => $route->where('name', 'like', '%' . $this->search . '%')))
                 ->latest('departure_date')

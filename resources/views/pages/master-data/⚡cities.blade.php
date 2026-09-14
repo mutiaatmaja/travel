@@ -76,7 +76,7 @@ new #[Layout('layouts::admin')] class extends Component {
     }
     public function render(): mixed
     {
-        return view('pages.⚡cities', [
+        return view('pages.master-data.⚡cities', [
             'cities' => City::when($this->search !== '', fn($q) => $q->where('name', 'like', '%' . $this->search . '%')->orWhere('code', 'like', '%' . $this->search . '%'))
                 ->latest()
                 ->paginate(10),

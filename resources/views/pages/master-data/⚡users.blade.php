@@ -119,7 +119,7 @@ new #[Layout('layouts::admin')] class extends Component {
 
     public function render(): mixed
     {
-        return view('pages.⚡users', [
+        return view('pages.master-data.⚡users', [
             'users' => User::with('roles')
                 ->when(
                     $this->search !== '',

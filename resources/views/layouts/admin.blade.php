@@ -251,14 +251,50 @@
                     </div>
 
                     {{-- =====================================================
-                        BOOKING / LAPORAN / PENGATURAN
+                        BOOKING
                     ===================================================== --}}
-                    <a wire:navigate href="{{ route('dashboard') }}"
-                        class="menu-item {{ request()->routeIs('booking.*') ? 'menu-active' : '' }}">
-                        <span
-                            class="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-slate-100 text-[10px] font-extrabold text-slate-500">B</span>
-                        <span x-show="!sidebar.desktopCollapsed" x-cloak>Booking</span>
-                    </a>
+                    <div x-data="{
+                        open: {{ request()->routeIs(['booking', 'booking.status', 'booking.settings', 'booking.fleet-condition', 'booking.trips']) ? 'true' : 'false' }}
+                    }" :class="open ? 'menu-open' : 'menu-closed'">
+                        <button type="button" class="menu-parent" @click="open = !open">
+                            <span class="flex items-center gap-3">
+                                <svg class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="5" width="18" height="16" rx="2" />
+                                    <path d="M16 3v4M8 3v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01" />
+                                </svg>
+                                <span x-show="!sidebar.desktopCollapsed" x-cloak>Booking</span>
+                            </span>
+                            <svg class="menu-arrow h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" x-show="!sidebar.desktopCollapsed" x-cloak>
+                                <path d="m6 9 6 6 6-6" />
+                            </svg>
+                        </button>
+
+                        <div class="submenu" x-show="!sidebar.desktopCollapsed" x-cloak>
+                            <a wire:navigate href="{{ route('booking.trips') }}"
+                                class="submenu-item {{ request()->routeIs('booking.trips') ? 'menu-active' : '' }}">
+                                Perjalanan / Trip
+                            </a>
+                            <a wire:navigate href="{{ route('booking') }}"
+                                class="submenu-item {{ request()->routeIs('booking') ? 'menu-active' : '' }}">
+                                Booking
+                            </a>
+                            <a wire:navigate href="{{ route('booking.status') }}"
+                                class="submenu-item {{ request()->routeIs('booking.status') ? 'menu-active' : '' }}">
+                                Status Booking
+                            </a>
+                            <a wire:navigate href="{{ route('booking.fleet-condition') }}"
+                                class="submenu-item {{ request()->routeIs('booking.fleet-condition') ? 'menu-active' : '' }}">
+                                Kondisi Armada
+                            </a>
+
+                            <a wire:navigate href="{{ route('booking.settings') }}"
+                                class="submenu-item {{ request()->routeIs('booking.settings') ? 'menu-active' : '' }}">
+                                Pengaturan Booking
+                            </a>
+                        </div>
+                    </div>
 
                     <a wire:navigate href="{{ route('dashboard') }}"
                         class="menu-item {{ request()->routeIs('laporan.*') ? 'menu-active' : '' }}">

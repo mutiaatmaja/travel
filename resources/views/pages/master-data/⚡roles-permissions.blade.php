@@ -161,7 +161,7 @@ new #[Layout('layouts::admin')] class extends Component {
             ->latest()
             ->paginate(10);
 
-        return view('pages.⚡roles-permissions', [
+        return view('pages.master-data.⚡roles-permissions', [
             'records' => $records,
             'permissions' => Permission::orderBy('display_name')->get(),
         ]);

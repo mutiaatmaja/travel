@@ -143,7 +143,7 @@ new #[Layout('layouts::admin')] class extends Component {
 
     public function render(): mixed
     {
-        return view('pages.⚡package-settings', [
+        return view('pages.packages.⚡settings', [
             'settings' => PackageSetting::query()
                 ->when($this->search !== '', fn($query) => $query->where('name', 'like', '%' . $this->search . '%'))
                 ->latest()

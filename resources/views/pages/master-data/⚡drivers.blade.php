@@ -82,7 +82,7 @@ new #[Layout('layouts::admin')] class extends Component {
     }
     public function render(): mixed
     {
-        return view('pages.⚡drivers', [
+        return view('pages.master-data.⚡drivers', [
             'drivers' => User::with('roles')
                 ->whereHas('roles', fn($q) => $q->where('name', 'supir'))
                 ->when(

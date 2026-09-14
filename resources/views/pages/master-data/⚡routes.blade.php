@@ -91,7 +91,7 @@ new #[Layout('layouts::admin')] class extends Component {
     }
     public function render(): mixed
     {
-        return view('pages.⚡routes', [
+        return view('pages.master-data.⚡routes', [
             'routes' => TravelRoute::with(['originCity', 'destinationCity', 'stops.outlet'])
                 ->when($this->search !== '', fn($q) => $q->where('name', 'like', '%' . $this->search . '%')->orWhere('code', 'like', '%' . $this->search . '%'))
                 ->latest()

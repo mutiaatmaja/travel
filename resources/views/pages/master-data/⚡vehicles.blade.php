@@ -87,7 +87,7 @@ new #[Layout('layouts::admin')] class extends Component {
     }
     public function render(): mixed
     {
-        return view('pages.⚡vehicles', [
+        return view('pages.master-data.⚡vehicles', [
             'vehicles' => Vehicle::when($this->search !== '', fn($q) => $q->where('code', 'like', '%' . $this->search . '%')->orWhere('license_plate', 'like', '%' . $this->search . '%'))
                 ->withCount('seats')
                 ->latest()

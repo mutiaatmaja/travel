@@ -81,7 +81,7 @@ new #[Layout('layouts::admin')] class extends Component {
     }
     public function render(): mixed
     {
-        return view('pages.⚡outlets', [
+        return view('pages.master-data.⚡outlets', [
             'outlets' => Outlet::with('city')
                 ->when($this->search !== '', fn($q) => $q->where('name', 'like', '%' . $this->search . '%')->orWhere('code', 'like', '%' . $this->search . '%'))
                 ->latest()

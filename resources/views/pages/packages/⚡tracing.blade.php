@@ -94,7 +94,7 @@ new #[Layout('layouts::admin')] class extends Component {
             ->limit(20)
             ->get();
 
-        return view('pages.⚡package-tracing', [
+        return view('pages.packages.⚡tracing', [
             'packages' => $packages,
             'selectedPackage' => $this->selectedPackageId ? Package::with(['packageSetting', 'trackingEvents'])->find($this->selectedPackageId) : null,
         ]);
