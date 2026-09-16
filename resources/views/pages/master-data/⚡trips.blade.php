@@ -118,6 +118,7 @@ new #[Layout('layouts::admin')] class extends Component {
             <table class="w-full min-w-170 text-left text-sm">
                 <thead class="bg-slate-50 text-xs uppercase text-slate-500">
                     <tr>
+                        <th class="px-6 py-4">Kode Trip</th>
                         <th class="px-6 py-4">Tanggal/Jam</th>
                         <th class="px-6 py-4">Rute</th>
                         <th class="px-6 py-4">Biaya</th>
@@ -130,6 +131,7 @@ new #[Layout('layouts::admin')] class extends Component {
                 <tbody class="divide-y divide-slate-100">
                     @forelse ($trips as $trip)
                         <tr>
+                            <td class="px-6 py-4 font-bold text-slate-900">{{ $trip->trip_code ?? '-' }}</td>
                             <td class="px-6 py-4">
                                 <p class="font-bold">{{ $trip->departure_date->format('d M Y') }}</p>
                                 <p class="text-xs text-slate-400">{{ substr($trip->departure_time, 0, 5) }}</p>
@@ -147,7 +149,7 @@ new #[Layout('layouts::admin')] class extends Component {
                                     wire:click="confirmDelete({{ $trip->id }})"
                                     class="px-2 text-xs font-bold text-red-600">Hapus</button></td>
                     </tr>@empty<tr>
-                            <td colspan="7" class="px-6 py-12 text-center text-slate-500">Belum ada jadwal.</td>
+                            <td colspan="8" class="px-6 py-12 text-center text-slate-500">Belum ada jadwal.</td>
                         </tr>
                     @endforelse
                 </tbody>
