@@ -40,10 +40,8 @@ new #[Layout('layouts::admin', ['title' => 'Perjalanan / Trip', 'section' => 'Bo
 
         $trips = Trip::query()
             ->with(['travelRoute.originCity', 'travelRoute.destinationCity', 'vehicle', 'driver'])
-            ->when($this->search !== '', fn ($query) => $query
-                ->where('trip_code', 'like', '%'.$this->search.'%')
-                ->orWhereHas('travelRoute', fn ($route) => $route->where('name', 'like', '%'.$this->search.'%')))
-            ->when($this->statusFilter !== '', fn ($query) => $query->where('status', $this->statusFilter))
+            ->when($this->search !== '', fn($query) => $query->where('trip_code', 'like', '%' . $this->search . '%')->orWhereHas('travelRoute', fn($route) => $route->where('name', 'like', '%' . $this->search . '%')))
+            ->when($this->statusFilter !== '', fn($query) => $query->where('status', $this->statusFilter))
             ->orderByDesc('departure_date')
             ->orderByDesc('departure_time')
             ->paginate(10);
@@ -52,7 +50,9 @@ new #[Layout('layouts::admin', ['title' => 'Perjalanan / Trip', 'section' => 'Bo
             'trips' => $trips,
             'stats' => [
                 'today' => Trip::whereDate('departure_date', $today)->count(),
-                'waiting' => Trip::whereIn('status', ['draft', 'scheduled'])->whereDate('departure_date', $today)->count(),
+                'waiting' => Trip::whereIn('status', ['draft', 'scheduled'])
+                    ->whereDate('departure_date', $today)
+                    ->count(),
                 'ongoing' => Trip::whereIn('status', ['boarding', 'on_the_way'])->count(),
                 'completed' => Trip::where('status', 'completed')->whereDate('departure_date', $today)->count(),
             ],
@@ -66,11 +66,14 @@ new #[Layout('layouts::admin', ['title' => 'Perjalanan / Trip', 'section' => 'Bo
         <div>
             <p class="text-xs font-bold uppercase tracking-widest text-brand-600">Booking</p>
             <h2 class="mt-2 text-3xl font-extrabold text-slate-900">Perjalanan / Trip</h2>
-            <p class="mt-2 text-sm text-slate-500">Setiap keberangkatan memiliki kode trip sebagai referensi booking dan kondisi armada.</p>
+            <p class="mt-2 text-sm text-slate-500">Setiap keberangkatan memiliki kode trip sebagai referensi booking dan
+                kondisi armada.</p>
         </div>
         <a wire:navigate href="{{ route('trips') }}"
             class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-500 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-brand-500/20 hover:bg-brand-600">
-            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14" /></svg>
+            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 5v14M5 12h14" />
+            </svg>
             Kelola Jadwal
         </a>
     </div>
@@ -92,7 +95,8 @@ new #[Layout('layouts::admin', ['title' => 'Perjalanan / Trip', 'section' => 'Bo
         <div class="flex flex-col gap-4 border-b border-slate-100 p-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
                 <h3 class="font-extrabold text-slate-900">Daftar Trip</h3>
-                <p class="mt-1 text-xs text-slate-500">Trip yang dibuat dari Jadwal (Master Data) dan mendapat kode otomatis.</p>
+                <p class="mt-1 text-xs text-slate-500">Trip yang dibuat dari Jadwal (Master Data) dan mendapat kode
+                    otomatis.</p>
             </div>
             <div class="flex flex-col gap-3 sm:flex-row">
                 <input wire:model.live.debounce.300ms="search" placeholder="Cari kode trip atau rute..."
@@ -131,7 +135,9 @@ new #[Layout('layouts::admin', ['title' => 'Perjalanan / Trip', 'section' => 'Bo
                         <tr>
                             <td class="px-6 py-4 font-bold text-slate-900">{{ $trip->trip_code ?? '-' }}</td>
                             <td class="px-6 py-4">
-                                <p class="font-semibold text-slate-800">{{ $trip->travelRoute?->originCity?->name ?? '-' }} &rarr; {{ $trip->travelRoute?->destinationCity?->name ?? '-' }}</p>
+                                <p class="font-semibold text-slate-800">
+                                    {{ $trip->travelRoute?->originCity?->name ?? '-' }} &rarr;
+                                    {{ $trip->travelRoute?->destinationCity?->name ?? '-' }}</p>
                                 <p class="mt-1 text-xs text-slate-400">{{ $trip->travelRoute?->name }}</p>
                             </td>
                             <td class="px-6 py-4">
@@ -140,18 +146,22 @@ new #[Layout('layouts::admin', ['title' => 'Perjalanan / Trip', 'section' => 'Bo
                             </td>
                             <td class="px-6 py-4">
                                 <p class="font-semibold">{{ $trip->vehicle?->code }}</p>
-                                <p class="mt-1 text-xs text-slate-400">{{ $trip->driver?->name ?? 'Supir belum ditentukan' }}</p>
+                                <p class="mt-1 text-xs text-slate-400">
+                                    {{ $trip->driver?->name ?? 'Supir belum ditentukan' }}</p>
                             </td>
-                            <td class="px-6 py-4 font-bold text-brand-700">{{ $trip->vehicle?->seat_capacity ?? '-' }} kursi</td>
+                            <td class="px-6 py-4 font-bold text-brand-700">{{ $trip->vehicle?->seat_capacity ?? '-' }}
+                                kursi</td>
                             <td class="px-6 py-4">
-                                <span class="rounded-full px-2.5 py-1 text-xs font-bold {{ $statusMap[$trip->status]['class'] ?? 'bg-slate-100 text-slate-600' }}">
+                                <span
+                                    class="rounded-full px-2.5 py-1 text-xs font-bold {{ $statusMap[$trip->status]['class'] ?? 'bg-slate-100 text-slate-600' }}">
                                     {{ $statusMap[$trip->status]['label'] ?? ucfirst($trip->status) }}
                                 </span>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-6 py-12 text-center text-slate-500">Belum ada trip. Buat jadwal terlebih dahulu di menu Jadwal.</td>
+                            <td colspan="6" class="px-6 py-12 text-center text-slate-500">Belum ada trip. Buat jadwal
+                                terlebih dahulu di menu Jadwal.</td>
                         </tr>
                     @endforelse
                 </tbody>
