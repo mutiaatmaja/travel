@@ -154,6 +154,7 @@
                             'drivers',
                             'routes',
                             'trips',
+                            'route-fares',
                         ])
                             ? 'true'
                             : 'false' }}
@@ -204,6 +205,10 @@
                             <a wire:navigate href="{{ route('trips') }}"
                                 class="submenu-item {{ request()->routeIs('trips') ? 'menu-active' : '' }}">
                                 Jadwal
+                            </a>
+                            <a wire:navigate href="{{ route('route-fares') }}"
+                                class="submenu-item {{ request()->routeIs('route-fares') ? 'menu-active' : '' }}">
+                                Tarif Antar Titik
                             </a>
                         </div>
                     </div>

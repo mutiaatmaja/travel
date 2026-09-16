@@ -31,4 +31,9 @@ class TravelRoute extends Model
     {
         return $this->hasMany(Trip::class);
     }
+
+    public function fares(): HasMany
+    {
+        return $this->hasMany(RouteFare::class);
+    }
 }

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class RouteStop extends Model
 {
@@ -17,5 +18,15 @@ class RouteStop extends Model
     public function outlet(): BelongsTo
     {
         return $this->belongsTo(Outlet::class);
+    }
+
+    public function originFares(): HasMany
+    {
+        return $this->hasMany(RouteFare::class, 'origin_stop_id');
+    }
+
+    public function destinationFares(): HasMany
+    {
+        return $this->hasMany(RouteFare::class, 'destination_stop_id');
     }
 }
