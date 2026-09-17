@@ -6,6 +6,7 @@ use App\Models\BookingSetting;
 use App\Models\RouteFare;
 use App\Models\RouteStop;
 use App\Models\Trip;
+use App\Models\VehicleSeat;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -79,6 +80,16 @@ new #[Layout('layouts::admin', ['title' => 'Booking', 'section' => 'Booking'])] 
 
     public function toggleSeat(int $seatId): void
     {
+        $trip = $this->tripId ? Trip::find($this->tripId) : null;
+        $originStop = $this->originStopId ? RouteStop::find($this->originStopId) : null;
+        $destinationStop = $this->destinationStopId ? RouteStop::find($this->destinationStopId) : null;
+
+        if ($trip && $originStop && $destinationStop && in_array($seatId, Booking::seatIdsInUseForSegment($trip, $originStop, $destinationStop), true)) {
+            $this->addError('selectedSeatIds', 'Kursi tersebut sudah diambil pada segmen perjalanan ini.');
+
+            return;
+        }
+
         if (in_array($seatId, $this->selectedSeatIds, true)) {
             $this->selectedSeatIds = array_values(array_diff($this->selectedSeatIds, [$seatId]));
 
@@ -219,11 +230,15 @@ new #[Layout('layouts::admin', ['title' => 'Booking', 'section' => 'Booking'])] 
 
         $fare = null;
         $availableSeats = collect();
+        $allSeats = collect();
+        $occupiedSeatIds = [];
 
         if ($trip && $originStop && $destinationStop && $originStop->stop_sequence < $destinationStop->stop_sequence) {
             $fare = RouteFare::where('travel_route_id', $trip->travel_route_id)->where('origin_stop_id', $originStop->id)->where('destination_stop_id', $destinationStop->id)->where('is_active', true)->first();
 
             $availableSeats = Booking::availableSeatsForSegment($trip, $originStop, $destinationStop);
+            $allSeats = VehicleSeat::where('vehicle_id', $trip->vehicle_id)->where('is_active', true)->orderBy('seat_row')->orderBy('seat_column')->get();
+            $occupiedSeatIds = Booking::seatIdsInUseForSegment($trip, $originStop, $destinationStop);
         }
 
         return view('pages.booking.⚡booking', [
@@ -234,6 +249,8 @@ new #[Layout('layouts::admin', ['title' => 'Booking', 'section' => 'Booking'])] 
             'stops' => $stops,
             'fare' => $fare,
             'availableSeats' => $availableSeats,
+            'allSeats' => $allSeats,
+            'occupiedSeatIds' => $occupiedSeatIds,
             'bookings' => Booking::with(['trip.travelRoute.originCity', 'trip.travelRoute.destinationCity', 'originStop.outlet', 'destinationStop.outlet', 'seats.vehicleSeat'])
                 ->when($this->search !== '', fn($query) => $query->where(fn($q) => $q->where('booking_code', 'like', '%' . $this->search . '%')->orWhere('customer_name', 'like', '%' . $this->search . '%')))
                 ->when($this->statusFilter !== '', fn($query) => $query->where('status', $this->statusFilter))
@@ -465,15 +482,28 @@ new #[Layout('layouts::admin', ['title' => 'Booking', 'section' => 'Booking'])] 
                         @enderror
                         @if ($tripId && $originStopId && $destinationStopId)
                             <div class="grid grid-cols-4 gap-2 sm:grid-cols-6">
-                                @forelse ($availableSeats as $seat)
+                                @forelse ($allSeats as $seat)
+                                    @php($seatTaken = in_array($seat->id, $occupiedSeatIds, true))
                                     <button type="button" wire:click="toggleSeat({{ $seat->id }})"
-                                        class="rounded-xl border px-3 py-2 text-sm font-bold {{ in_array($seat->id, $selectedSeatIds) ? 'border-brand-500 bg-brand-500 text-white' : 'border-slate-200 text-slate-600 hover:border-brand-300' }}">
-                                        {{ $seat->seat_number }}
+                                        @disabled($seatTaken)
+                                        class="rounded-xl border px-3 py-2 text-sm font-bold {{ $seatTaken ? 'cursor-not-allowed border-red-200 bg-red-50 text-red-500' : (in_array($seat->id, $selectedSeatIds) ? 'border-brand-500 bg-brand-500 text-white' : 'border-slate-200 text-slate-600 hover:border-brand-300') }}">
+                                        <span class="block">{{ $seat->seat_number }}</span>
+                                        @if ($seatTaken)
+                                            <span class="mt-0.5 block text-[9px] font-semibold">Sudah diambil</span>
+                                        @endif
                                     </button>
                                 @empty
-                                    <p class="col-span-full text-sm text-slate-500">Tidak ada kursi tersedia untuk
-                                        segmen ini.</p>
+                                    <p class="col-span-full text-sm text-slate-500">Kursi armada belum tersedia.</p>
                                 @endforelse
+                            </div>
+                            <div class="mt-3 flex flex-wrap gap-3 text-xs text-slate-500">
+                                <span class="inline-flex items-center gap-1.5"><span
+                                        class="h-3 w-3 rounded border border-slate-200 bg-white"></span>Tersedia</span>
+                                <span class="inline-flex items-center gap-1.5"><span
+                                        class="h-3 w-3 rounded bg-brand-500"></span>Dipilih</span>
+                                <span class="inline-flex items-center gap-1.5"><span
+                                        class="h-3 w-3 rounded border border-red-200 bg-red-50"></span>Sudah
+                                    diambil</span>
                             </div>
                         @else
                             <p class="text-sm text-slate-500">Pilih trip, titik naik, dan titik turun terlebih dahulu.
