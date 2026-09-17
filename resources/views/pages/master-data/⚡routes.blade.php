@@ -109,8 +109,14 @@ new #[Layout('layouts::admin')] class extends Component {
     ])
     <div class="mt-8 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div class="flex flex-col gap-4 border-b border-slate-100 p-4 sm:flex-row sm:items-center sm:justify-between">
-            <h3 class="font-extrabold">Daftar Rute</h3><input wire:model.live.debounce.300ms="search"
-                placeholder="Cari rute..." class="w-full rounded-xl border px-4 py-2.5 text-sm sm:max-w-xs">
+            <div>
+                <h3 class="font-extrabold">Daftar Rute</h3>
+                <p class="mt-1 text-xs text-slate-500">Tarif di bawah ini adalah tarif penuh ujung ke ujung. Untuk tarif
+                    naik/turun di titik tertentu, kelola di <a wire:navigate href="{{ route('route-fares') }}"
+                        class="font-semibold text-brand-600 hover:underline">Tarif Antar Titik &rarr;</a></p>
+            </div>
+            <input wire:model.live.debounce.300ms="search" placeholder="Cari rute..."
+                class="w-full rounded-xl border px-4 py-2.5 text-sm sm:max-w-xs">
         </div>
         <div class="relative overflow-x-auto">
             <div wire:loading wire:target="search,save,openEdit,confirmDelete,delete"
@@ -123,7 +129,7 @@ new #[Layout('layouts::admin')] class extends Component {
                         <th class="px-6 py-4">Rute utama</th>
                         <th class="px-6 py-4">Urutan stop outlet</th>
                         <th class="px-6 py-4">Durasi</th>
-                        <th class="px-6 py-4">Biaya</th>
+                        <th class="px-6 py-4">Tarif Penuh (Ujung ke Ujung)</th>
                         <th class="px-6 py-4 text-right">Aksi</th>
                     </tr>
                 </thead>

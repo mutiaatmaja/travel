@@ -13,7 +13,9 @@ class MasterDataSeeder extends Seeder
             OutletSeeder::class,
             VehicleSeeder::class,
             RouteSeeder::class,
+            RouteFareSeeder::class,
             TripSeeder::class,
+            BookingSettingSeeder::class,
         ]);
     }
 }

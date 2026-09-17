@@ -141,7 +141,7 @@ new #[Layout('layouts::admin')] class extends Component {
     public function render(): mixed
     {
         return view('pages.master-data.⚡route-fares', [
-            'fares' => RouteFare::with(['travelRoute', 'originStop.outlet', 'destinationStop.outlet'])
+            'fares' => RouteFare::with(['travelRoute', 'originStop.outlet.city', 'destinationStop.outlet.city'])
                 ->when($this->search !== '', fn($query) => $query->whereHas('travelRoute', fn($route) => $route->where('name', 'like', '%' . $this->search . '%')))
                 ->latest()
                 ->paginate(10),
@@ -157,6 +157,9 @@ new #[Layout('layouts::admin')] class extends Component {
         'heading' => 'Tarif Antar Titik',
         'description' => 'Atur biaya berdasarkan titik naik dan titik turun dalam satu rute.',
     ])
+    <p class="mt-3 text-xs text-slate-500">Tarif ini khusus penumpang yang naik/turun di titik tertentu (segmen), berbeda
+        dari tarif penuh ujung ke ujung yang dikelola di halaman <a wire:navigate href="{{ route('routes') }}"
+            class="font-semibold text-brand-600 hover:underline">Rute</a>.</p>
 
     <div class="mt-8 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div class="flex flex-col gap-4 border-b border-slate-100 p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -179,6 +182,7 @@ new #[Layout('layouts::admin')] class extends Component {
             <table class="w-full min-w-200 text-left text-sm">
                 <thead class="bg-slate-50 text-xs uppercase text-slate-500">
                     <tr>
+                        <th class="px-6 py-4">Kode</th>
                         <th class="px-6 py-4">Rute</th>
                         <th class="px-6 py-4">Asal</th>
                         <th class="px-6 py-4">Tujuan</th>
@@ -190,6 +194,9 @@ new #[Layout('layouts::admin')] class extends Component {
                 <tbody class="divide-y divide-slate-100">
                     @forelse ($fares as $fare)
                         <tr>
+                            <td class="px-6 py-4 font-bold text-brand-700">
+                                {{ $fare->originStop->outlet->city->code }}-{{ $fare->destinationStop->outlet->city->code }}
+                            </td>
                             <td class="px-6 py-4 font-bold">{{ $fare->travelRoute->name }}</td>
                             <td class="px-6 py-4">{{ $fare->originStop->outlet->name }}</td>
                             <td class="px-6 py-4">{{ $fare->destinationStop->outlet->name }}</td>
@@ -205,7 +212,7 @@ new #[Layout('layouts::admin')] class extends Component {
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-6 py-12 text-center text-slate-500">Belum ada tarif antar
+                            <td colspan="7" class="px-6 py-12 text-center text-slate-500">Belum ada tarif antar
                                 titik.</td>
                         </tr>
                     @endforelse

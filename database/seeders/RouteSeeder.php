@@ -16,8 +16,8 @@ class RouteSeeder extends Seeder
         $outlets = Outlet::pluck('id', 'code');
 
         $routes = [
-            ['code' => 'PNT-SMT', 'origin' => 'PNT', 'destination' => 'SMT', 'name' => 'Pontianak - Semitau', 'distance_km' => 420, 'duration' => 600, 'cost' => 245000, 'stops' => ['PNT-CENTER', 'SGG-CENTER', 'SDK-CENTER', 'STG-CENTER', 'SMT-CENTER']],
-            ['code' => 'SMT-PNT', 'origin' => 'SMT', 'destination' => 'PNT', 'name' => 'Semitau - Pontianak', 'distance_km' => 420, 'duration' => 600, 'cost' => 245000, 'stops' => ['SMT-CENTER', 'STG-CENTER', 'SDK-CENTER', 'SGG-CENTER', 'PNT-CENTER']],
+            ['code' => 'PNT-SMT', 'origin' => 'PNT', 'destination' => 'SMT', 'name' => 'Pontianak - Semitau', 'distance_km' => 420, 'duration' => 600, 'cost' => 450_000, 'stops' => ['PNT-CENTER', 'SGG-CENTER', 'SDK-CENTER', 'STG-CENTER', 'SMT-CENTER']],
+            ['code' => 'SMT-PNT', 'origin' => 'SMT', 'destination' => 'PNT', 'name' => 'Semitau - Pontianak', 'distance_km' => 420, 'duration' => 600, 'cost' => 450_000, 'stops' => ['SMT-CENTER', 'STG-CENTER', 'SDK-CENTER', 'SGG-CENTER', 'PNT-CENTER']],
         ];
 
         foreach ($routes as $routeData) {
