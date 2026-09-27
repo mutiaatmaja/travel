@@ -180,7 +180,7 @@
                             </a>
                             <a wire:navigate href="{{ route('roles-permissions') }}"
                                 class="submenu-item {{ request()->routeIs('roles-permissions') ? 'menu-active' : '' }}">
-                                Role & Permission
+                                Peran & Ijin
                             </a>
                             <a wire:navigate href="{{ route('cities') }}"
                                 class="submenu-item {{ request()->routeIs('cities') ? 'menu-active' : '' }}">
