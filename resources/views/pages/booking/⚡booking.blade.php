@@ -368,6 +368,19 @@ new #[Layout('layouts::admin', ['title' => 'Booking', 'section' => 'Booking'])] 
                                         wire:loading.attr="disabled"
                                         class="px-2 text-xs font-bold text-green-600">Konfirmasi Bayar</button>
                                 @endif
+                                @if ($booking->status === 'confirmed')
+                                    <a href="{{ route('booking.ticket', $booking) }}" target="_blank" rel="noopener"
+                                        class="inline-flex items-center gap-1 px-2 text-xs font-bold text-brand-600 hover:text-brand-700"
+                                        aria-label="Cetak tiket {{ $booking->booking_code }}" title="Cetak tiket PDF">
+                                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                            stroke-width="2">
+                                            <path
+                                                d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                                            <path d="M6 14h12v8H6zM18 12h.01" />
+                                        </svg>
+                                        Cetak PDF
+                                    </a>
+                                @endif
                                 @if (in_array($booking->status, ['pending', 'confirmed']))
                                     <button type="button" wire:click="confirmCancel({{ $booking->id }})"
                                         class="px-2 text-xs font-bold text-red-600">Batalkan</button>

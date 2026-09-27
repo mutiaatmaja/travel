@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\BookingTicketController;
 
 Route::livewire('/', 'pages::public.home')->name('home');
 
@@ -63,3 +64,7 @@ Route::livewire('/booking/fleet-condition', 'pages::booking.fleet-condition')
 Route::livewire('/booking/trips', 'pages::booking.trip-overview')
     ->middleware('auth')
     ->name('booking.trips');
+
+Route::get('/booking/{booking}/ticket.pdf', BookingTicketController::class)
+    ->middleware('auth')
+    ->name('booking.ticket');
