@@ -90,7 +90,7 @@
             'fleet-condition.view-all',
             'fleet-condition.view-assigned-trips',
             'fleet-condition.view-own-trips',
-        ])->contains(fn (string $permission): bool => $sidebarUser?->hasPermission($permission) ?? false);
+        ])->contains(fn(string $permission): bool => $sidebarUser?->hasPermission($permission) ?? false);
         $canMasterDataMenu = $canMasterData || $canRouteFare || $canUsers || $canRolePermissions;
         $canBookingMenu = $canBooking || $canTrip || $canBookingSettings || $canFleetCondition;
         $logoRoute = match (true) {
@@ -160,200 +160,203 @@
                         DASHBOARD
                     ===================================================== --}}
                     @if ($canDashboard)
-                    <a wire:navigate href="{{ route('dashboard') }}"
-                        class="menu-item {{ request()->routeIs('dashboard') ? 'menu-active' : '' }}">
-                        <svg class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <rect width="7" height="7" x="3" y="3" rx="1" />
-                            <rect width="7" height="7" x="14" y="3" rx="1" />
-                            <rect width="7" height="7" x="14" y="14" rx="1" />
-                            <rect width="7" height="7" x="3" y="14" rx="1" />
-                        </svg>
-                        <span x-show="!sidebar.desktopCollapsed" x-cloak>Dashboard</span>
-                    </a>
+                        <a wire:navigate href="{{ route('dashboard') }}"
+                            class="menu-item {{ request()->routeIs('dashboard') ? 'menu-active' : '' }}">
+                            <svg class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <rect width="7" height="7" x="3" y="3" rx="1" />
+                                <rect width="7" height="7" x="14" y="3" rx="1" />
+                                <rect width="7" height="7" x="14" y="14" rx="1" />
+                                <rect width="7" height="7" x="3" y="14" rx="1" />
+                            </svg>
+                            <span x-show="!sidebar.desktopCollapsed" x-cloak>Dashboard</span>
+                        </a>
                     @endif
 
                     {{-- =====================================================
                         MASTER DATA
                     ===================================================== --}}
                     @if ($canMasterDataMenu)
-                    <div x-data="{
-                        open: {{ request()->routeIs([
-                            'users',
-                            'roles-permissions',
-                            'permissions',
-                            'cities',
-                            'outlets',
-                            'vehicles',
-                            'drivers',
-                            'routes',
-                            'trips',
-                            'route-fares',
-                        ])
-                            ? 'true'
-                            : 'false' }}
-                    }" :class="open ? 'menu-open' : 'menu-closed'">
-                        <button type="button" class="menu-parent" @click="open = !open">
-                            <span class="flex items-center gap-3">
-                                <svg class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2">
-                                    <path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z" />
+                        <div x-data="{
+                            open: {{ request()->routeIs([
+                                'users',
+                                'roles-permissions',
+                                'permissions',
+                                'cities',
+                                'outlets',
+                                'vehicles',
+                                'drivers',
+                                'routes',
+                                'trips',
+                                'route-fares',
+                            ])
+                                ? 'true'
+                                : 'false' }}
+                        }" :class="open ? 'menu-open' : 'menu-closed'">
+                            <button type="button" class="menu-parent" @click="open = !open">
+                                <span class="flex items-center gap-3">
+                                    <svg class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2">
+                                        <path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z" />
+                                    </svg>
+                                    <span x-show="!sidebar.desktopCollapsed" x-cloak>Master Data</span>
+                                </span>
+                                <svg class="menu-arrow h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" x-show="!sidebar.desktopCollapsed" x-cloak>
+                                    <path d="m6 9 6 6 6-6" />
                                 </svg>
-                                <span x-show="!sidebar.desktopCollapsed" x-cloak>Master Data</span>
-                            </span>
-                            <svg class="menu-arrow h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2" x-show="!sidebar.desktopCollapsed" x-cloak>
-                                <path d="m6 9 6 6 6-6" />
-                            </svg>
-                        </button>
+                            </button>
 
-                        <div class="submenu" x-show="!sidebar.desktopCollapsed" x-cloak>
-                            @if ($canUsers)
-                            <a wire:navigate href="{{ route('users') }}"
-                                class="submenu-item {{ request()->routeIs('users') ? 'menu-active' : '' }}">
-                                Users
-                            </a>
-                            @endif
-                            @if ($canRolePermissions)
-                            <a wire:navigate href="{{ route('roles-permissions') }}"
-                                class="submenu-item {{ request()->routeIs('roles-permissions') ? 'menu-active' : '' }}">
-                                Peran & Ijin
-                            </a>
-                            @endif
-                            @if ($canMasterData)
-                            <a wire:navigate href="{{ route('cities') }}"
-                                class="submenu-item {{ request()->routeIs('cities') ? 'menu-active' : '' }}">
-                                Wilayah
-                            </a>
-                            <a wire:navigate href="{{ route('outlets') }}"
-                                class="submenu-item {{ request()->routeIs('outlets') ? 'menu-active' : '' }}">
-                                Outlet
-                            </a>
-                            <a wire:navigate href="{{ route('vehicles') }}"
-                                class="submenu-item {{ request()->routeIs('vehicles') ? 'menu-active' : '' }}">
-                                Armada
-                            </a>
-                            <a wire:navigate href="{{ route('drivers') }}"
-                                class="submenu-item {{ request()->routeIs('drivers') ? 'menu-active' : '' }}">
-                                Supir
-                            </a>
-                            <a wire:navigate href="{{ route('routes') }}"
-                                class="submenu-item {{ request()->routeIs('routes') ? 'menu-active' : '' }}">
-                                Rute
-                            </a>
-                            <a wire:navigate href="{{ route('trips') }}"
-                                class="submenu-item {{ request()->routeIs('trips') ? 'menu-active' : '' }}">
-                                Jadwal
-                            </a>
-                            @endif
-                            @if ($canRouteFare)
-                            <a wire:navigate href="{{ route('route-fares') }}"
-                                class="submenu-item {{ request()->routeIs('route-fares') ? 'menu-active' : '' }}">
-                                Tarif Antar Titik
-                            </a>
-                            @endif
+                            <div class="submenu" x-show="!sidebar.desktopCollapsed" x-cloak>
+                                @if ($canUsers)
+                                    <a wire:navigate href="{{ route('users') }}"
+                                        class="submenu-item {{ request()->routeIs('users') ? 'menu-active' : '' }}">
+                                        Users
+                                    </a>
+                                @endif
+                                @if ($canRolePermissions)
+                                    <a wire:navigate href="{{ route('roles-permissions') }}"
+                                        class="submenu-item {{ request()->routeIs('roles-permissions') ? 'menu-active' : '' }}">
+                                        Peran & Ijin
+                                    </a>
+                                @endif
+                                @if ($canMasterData)
+                                    <a wire:navigate href="{{ route('cities') }}"
+                                        class="submenu-item {{ request()->routeIs('cities') ? 'menu-active' : '' }}">
+                                        Wilayah
+                                    </a>
+                                    <a wire:navigate href="{{ route('outlets') }}"
+                                        class="submenu-item {{ request()->routeIs('outlets') ? 'menu-active' : '' }}">
+                                        Outlet
+                                    </a>
+                                    <a wire:navigate href="{{ route('vehicles') }}"
+                                        class="submenu-item {{ request()->routeIs('vehicles') ? 'menu-active' : '' }}">
+                                        Armada
+                                    </a>
+                                    <a wire:navigate href="{{ route('drivers') }}"
+                                        class="submenu-item {{ request()->routeIs('drivers') ? 'menu-active' : '' }}">
+                                        Supir
+                                    </a>
+                                    <a wire:navigate href="{{ route('routes') }}"
+                                        class="submenu-item {{ request()->routeIs('routes') ? 'menu-active' : '' }}">
+                                        Rute
+                                    </a>
+                                    <a wire:navigate href="{{ route('trips') }}"
+                                        class="submenu-item {{ request()->routeIs('trips') ? 'menu-active' : '' }}">
+                                        Jadwal
+                                    </a>
+                                @endif
+                                @if ($canRouteFare)
+                                    <a wire:navigate href="{{ route('route-fares') }}"
+                                        class="submenu-item {{ request()->routeIs('route-fares') ? 'menu-active' : '' }}">
+                                        Tarif Antar Titik
+                                    </a>
+                                @endif
+                            </div>
                         </div>
-                    </div>
                     @endif
 
                     {{-- =====================================================
                         PAKET
                     ===================================================== --}}
                     @if ($canPackages)
-                    <div x-data="{
-                        open: {{ request()->routeIs(['packages.statistics', 'packages.settings', 'packages', 'packages.tracing'])
-                            ? 'true'
-                            : 'false' }}
-                    }" :class="open ? 'menu-open' : 'menu-closed'">
-                        <button type="button" class="menu-parent" @click="open = !open">
-                            <span class="flex items-center gap-3">
-                                <svg class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none"
-                                    stroke="currentColor" stroke-width="2">
-                                    <path d="M21 8l-9-5-9 5 9 5 9-5Zm0 0v8l-9 5m0-8v8m0-8L3 8m9 5-9-5" />
+                        <div x-data="{
+                            open: {{ request()->routeIs(['packages.statistics', 'packages.settings', 'packages', 'packages.tracing'])
+                                ? 'true'
+                                : 'false' }}
+                        }" :class="open ? 'menu-open' : 'menu-closed'">
+                            <button type="button" class="menu-parent" @click="open = !open">
+                                <span class="flex items-center gap-3">
+                                    <svg class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2">
+                                        <path d="M21 8l-9-5-9 5 9 5 9-5Zm0 0v8l-9 5m0-8v8m0-8L3 8m9 5-9-5" />
+                                    </svg>
+                                    <span x-show="!sidebar.desktopCollapsed" x-cloak>Paket</span>
+                                </span>
+                                <svg class="menu-arrow h-4 w-4" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2" x-show="!sidebar.desktopCollapsed"
+                                    x-cloak>
+                                    <path d="m6 9 6 6 6-6" />
                                 </svg>
-                                <span x-show="!sidebar.desktopCollapsed" x-cloak>Paket</span>
-                            </span>
-                            <svg class="menu-arrow h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2" x-show="!sidebar.desktopCollapsed" x-cloak>
-                                <path d="m6 9 6 6 6-6" />
-                            </svg>
-                        </button>
+                            </button>
 
-                        <div class="submenu" x-show="!sidebar.desktopCollapsed" x-cloak>
-                            <a wire:navigate href="{{ route('packages.statistics') }}"
-                                class="submenu-item {{ request()->routeIs('packages.statistics') ? 'menu-active' : '' }}">
-                                Statistik
-                            </a>
-                            <a wire:navigate href="{{ route('packages.settings') }}"
-                                class="submenu-item {{ request()->routeIs('packages.settings') ? 'menu-active' : '' }}">
-                                Pengaturan
-                            </a>
-                            <a wire:navigate href="{{ route('packages') }}"
-                                class="submenu-item {{ request()->routeIs('packages') ? 'menu-active' : '' }}">
-                                Semua Paket
-                            </a>
-                            <a wire:navigate href="{{ route('packages.tracing') }}"
-                                class="submenu-item {{ request()->routeIs('packages.tracing') ? 'menu-active' : '' }}">
-                                Tracing
-                            </a>
+                            <div class="submenu" x-show="!sidebar.desktopCollapsed" x-cloak>
+                                <a wire:navigate href="{{ route('packages.statistics') }}"
+                                    class="submenu-item {{ request()->routeIs('packages.statistics') ? 'menu-active' : '' }}">
+                                    Statistik
+                                </a>
+                                <a wire:navigate href="{{ route('packages.settings') }}"
+                                    class="submenu-item {{ request()->routeIs('packages.settings') ? 'menu-active' : '' }}">
+                                    Pengaturan
+                                </a>
+                                <a wire:navigate href="{{ route('packages') }}"
+                                    class="submenu-item {{ request()->routeIs('packages') ? 'menu-active' : '' }}">
+                                    Semua Paket
+                                </a>
+                                <a wire:navigate href="{{ route('packages.tracing') }}"
+                                    class="submenu-item {{ request()->routeIs('packages.tracing') ? 'menu-active' : '' }}">
+                                    Tracing
+                                </a>
+                            </div>
                         </div>
-                    </div>
                     @endif
 
                     {{-- =====================================================
                         BOOKING
                     ===================================================== --}}
                     @if ($canBookingMenu)
-                    <div x-data="{
-                        open: {{ request()->routeIs(['booking', 'booking.status', 'booking.settings', 'booking.fleet-condition', 'booking.trips']) ? 'true' : 'false' }}
-                    }" :class="open ? 'menu-open' : 'menu-closed'">
-                        <button type="button" class="menu-parent" @click="open = !open">
-                            <span class="flex items-center gap-3">
-                                <svg class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none"
-                                    stroke="currentColor" stroke-width="2">
-                                    <rect x="3" y="5" width="18" height="16" rx="2" />
-                                    <path d="M16 3v4M8 3v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01" />
+                        <div x-data="{
+                            open: {{ request()->routeIs(['booking', 'booking.status', 'booking.settings', 'booking.fleet-condition', 'booking.trips']) ? 'true' : 'false' }}
+                        }" :class="open ? 'menu-open' : 'menu-closed'">
+                            <button type="button" class="menu-parent" @click="open = !open">
+                                <span class="flex items-center gap-3">
+                                    <svg class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2">
+                                        <rect x="3" y="5" width="18" height="16" rx="2" />
+                                        <path
+                                            d="M16 3v4M8 3v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01" />
+                                    </svg>
+                                    <span x-show="!sidebar.desktopCollapsed" x-cloak>Booking</span>
+                                </span>
+                                <svg class="menu-arrow h-4 w-4" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2" x-show="!sidebar.desktopCollapsed"
+                                    x-cloak>
+                                    <path d="m6 9 6 6 6-6" />
                                 </svg>
-                                <span x-show="!sidebar.desktopCollapsed" x-cloak>Booking</span>
-                            </span>
-                            <svg class="menu-arrow h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2" x-show="!sidebar.desktopCollapsed" x-cloak>
-                                <path d="m6 9 6 6 6-6" />
-                            </svg>
-                        </button>
+                            </button>
 
-                        <div class="submenu" x-show="!sidebar.desktopCollapsed" x-cloak>
-                            @if ($canTrip)
-                            <a wire:navigate href="{{ route('booking.trips') }}"
-                                class="submenu-item {{ request()->routeIs('booking.trips') ? 'menu-active' : '' }}">
-                                Perjalanan / Trip
-                            </a>
-                            @endif
-                            @if ($canBooking)
-                            <a wire:navigate href="{{ route('booking') }}"
-                                class="submenu-item {{ request()->routeIs('booking') ? 'menu-active' : '' }}">
-                                Booking
-                            </a>
-                            <a wire:navigate href="{{ route('booking.status') }}"
-                                class="submenu-item {{ request()->routeIs('booking.status') ? 'menu-active' : '' }}">
-                                Status Booking
-                            </a>
-                            @endif
-                            @if ($canFleetCondition)
-                            <a wire:navigate href="{{ route('booking.fleet-condition') }}"
-                                class="submenu-item {{ request()->routeIs('booking.fleet-condition') ? 'menu-active' : '' }}">
-                                Kondisi Armada
-                            </a>
-                            @endif
+                            <div class="submenu" x-show="!sidebar.desktopCollapsed" x-cloak>
+                                @if ($canTrip)
+                                    <a wire:navigate href="{{ route('booking.trips') }}"
+                                        class="submenu-item {{ request()->routeIs('booking.trips') ? 'menu-active' : '' }}">
+                                        Perjalanan / Trip
+                                    </a>
+                                @endif
+                                @if ($canBooking)
+                                    <a wire:navigate href="{{ route('booking') }}"
+                                        class="submenu-item {{ request()->routeIs('booking') ? 'menu-active' : '' }}">
+                                        Booking
+                                    </a>
+                                    <a wire:navigate href="{{ route('booking.status') }}"
+                                        class="submenu-item {{ request()->routeIs('booking.status') ? 'menu-active' : '' }}">
+                                        Status Booking
+                                    </a>
+                                @endif
+                                @if ($canFleetCondition)
+                                    <a wire:navigate href="{{ route('booking.fleet-condition') }}"
+                                        class="submenu-item {{ request()->routeIs('booking.fleet-condition') ? 'menu-active' : '' }}">
+                                        Kondisi Armada
+                                    </a>
+                                @endif
 
-                            @if ($canBookingSettings)
-                            <a wire:navigate href="{{ route('booking.settings') }}"
-                                class="submenu-item {{ request()->routeIs('booking.settings') ? 'menu-active' : '' }}">
-                                Pengaturan Booking
-                            </a>
-                            @endif
+                                @if ($canBookingSettings)
+                                    <a wire:navigate href="{{ route('booking.settings') }}"
+                                        class="submenu-item {{ request()->routeIs('booking.settings') ? 'menu-active' : '' }}">
+                                        Pengaturan Booking
+                                    </a>
+                                @endif
+                            </div>
                         </div>
-                    </div>
                     @endif
 
                 </div>

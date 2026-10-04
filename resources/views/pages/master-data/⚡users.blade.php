@@ -8,8 +8,7 @@ use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
 
-new #[Layout('layouts::admin')] class extends Component
-{
+new #[Layout('layouts::admin')] class extends Component {
     use WithPagination;
 
     public string $title = 'Users';
@@ -39,7 +38,7 @@ new #[Layout('layouts::admin')] class extends Component
 
     public function mount(): void
     {
-        if (! auth()->check()) {
+        if (!auth()->check()) {
             $this->redirectRoute('login', navigate: true);
         }
     }
@@ -64,7 +63,7 @@ new #[Layout('layouts::admin')] class extends Component
         $this->email = $user->email;
         $this->password = '';
         $this->assignedCityId = $user->assigned_city_id;
-        $this->selectedRoles = $user->roles->pluck('id')->map(fn (int $roleId): string => (string) $roleId)->all();
+        $this->selectedRoles = $user->roles->pluck('id')->map(fn(int $roleId): string => (string) $roleId)->all();
         $this->modalOpen = true;
     }
 
@@ -83,7 +82,7 @@ new #[Layout('layouts::admin')] class extends Component
             ->whereIn('name', ['admin', 'admin_wilayah'])
             ->exists();
 
-        if ($hasRegionalAdminRole && ! $this->assignedCityId) {
+        if ($hasRegionalAdminRole && !$this->assignedCityId) {
             $this->addError('assignedCityId', 'Pilih wilayah tugas untuk akun admin.');
 
             return;
@@ -98,7 +97,7 @@ new #[Layout('layouts::admin')] class extends Component
             $attributes['password'] = $this->password;
         }
 
-        $user = $this->editingId ? User::findOrFail($this->editingId) : new User;
+        $user = $this->editingId ? User::findOrFail($this->editingId) : new User();
         $user->fill($attributes);
         $user->save();
         $user->syncRoles($this->selectedRoles);
@@ -123,7 +122,7 @@ new #[Layout('layouts::admin')] class extends Component
 
     public function delete(): void
     {
-        if (! $this->deleteId || $this->deleteId === auth()->id()) {
+        if (!$this->deleteId || $this->deleteId === auth()->id()) {
             return;
         }
 
@@ -153,8 +152,8 @@ new #[Layout('layouts::admin')] class extends Component
             'users' => User::with(['roles', 'assignedCity'])
                 ->when(
                     $this->search !== '',
-                    fn ($query) => $query->where(function ($query): void {
-                        $query->where('name', 'like', '%'.$this->search.'%')->orWhere('email', 'like', '%'.$this->search.'%');
+                    fn($query) => $query->where(function ($query): void {
+                        $query->where('name', 'like', '%' . $this->search . '%')->orWhere('email', 'like', '%' . $this->search . '%');
                     }),
                 )
                 ->latest()
@@ -345,14 +344,17 @@ new #[Layout('layouts::admin')] class extends Component
                         @enderror
                     </div>
                     <div>
-                        <label for="assigned-city" class="mb-1.5 block text-sm font-semibold text-slate-700">Wilayah tugas admin</label>
-                        <select id="assigned-city" wire:model="assignedCityId" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-brand-500 focus:bg-white focus:ring-4 focus:ring-brand-100">
+                        <label for="assigned-city" class="mb-1.5 block text-sm font-semibold text-slate-700">Wilayah
+                            tugas admin</label>
+                        <select id="assigned-city" wire:model="assignedCityId"
+                            class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-brand-500 focus:bg-white focus:ring-4 focus:ring-brand-100">
                             <option value="">Pilih wilayah (wajib untuk Admin/Admin Wilayah)</option>
                             @foreach ($cities as $city)
                                 <option value="{{ $city->id }}">{{ $city->name }}</option>
                             @endforeach
                         </select>
-                        <p class="mt-1 text-xs text-slate-500">Wilayah ini membatasi titik armada yang dapat dilaporkan admin.</p>
+                        <p class="mt-1 text-xs text-slate-500">Wilayah ini membatasi titik armada yang dapat dilaporkan
+                            admin.</p>
                         @error('assignedCityId')
                             <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
                         @enderror
