@@ -29,6 +29,11 @@ class DatabaseSeeder extends Seeder
                 'description' => 'Tingkatan Admin yang memiliki akses terbatas ke fitur dan pengaturan sistem, biasanya untuk mengelola konten dan pengguna.',
             ],
             [
+                'name' => 'admin_wilayah',
+                'display_name' => 'Admin Wilayah',
+                'description' => 'Admin operasional yang hanya dapat melaporkan posisi pada kota tugasnya.',
+            ],
+            [
                 'name' => 'supir',
                 'display_name' => 'Supir',
                 'description' => 'Ayo pak supir.',
@@ -94,6 +99,9 @@ class DatabaseSeeder extends Seeder
 
         }
 
-        $this->call(MasterDataSeeder::class);
+        $this->call([
+            MasterDataSeeder::class,
+            PermissionSeeder::class,
+        ]);
     }
 }

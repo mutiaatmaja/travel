@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\City;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Validation\Rule;
@@ -7,26 +8,38 @@ use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
 
-new #[Layout('layouts::admin')] class extends Component {
+new #[Layout('layouts::admin')] class extends Component
+{
     use WithPagination;
+
     public string $title = 'Users';
 
     public string $section = 'Master Data';
 
     public string $search = '';
+
     public bool $modalOpen = false;
+
     public bool $confirmDeleteOpen = false;
+
     public ?int $editingId = null;
+
     public string $name = '';
+
     public string $email = '';
+
     public string $password = '';
+
+    public ?int $assignedCityId = null;
+
     /** @var array<int, string> */
     public array $selectedRoles = [];
+
     public ?int $deleteId = null;
 
     public function mount(): void
     {
-        if (!auth()->check()) {
+        if (! auth()->check()) {
             $this->redirectRoute('login', navigate: true);
         }
     }
@@ -50,7 +63,8 @@ new #[Layout('layouts::admin')] class extends Component {
         $this->name = $user->name;
         $this->email = $user->email;
         $this->password = '';
-        $this->selectedRoles = $user->roles->pluck('id')->map(fn(int $roleId): string => (string) $roleId)->all();
+        $this->assignedCityId = $user->assigned_city_id;
+        $this->selectedRoles = $user->roles->pluck('id')->map(fn (int $roleId): string => (string) $roleId)->all();
         $this->modalOpen = true;
     }
 
@@ -62,14 +76,29 @@ new #[Layout('layouts::admin')] class extends Component {
             'password' => [$this->editingId ? 'nullable' : 'required', 'string', 'min:8'],
             'selectedRoles' => ['required', 'array', 'min:1'],
             'selectedRoles.*' => ['integer', 'exists:roles,id'],
+            'assignedCityId' => ['nullable', 'exists:cities,id'],
         ]);
 
-        $attributes = ['name' => $this->name, 'email' => $this->email];
+        $hasRegionalAdminRole = Role::whereIn('id', $this->selectedRoles)
+            ->whereIn('name', ['admin', 'admin_wilayah'])
+            ->exists();
+
+        if ($hasRegionalAdminRole && ! $this->assignedCityId) {
+            $this->addError('assignedCityId', 'Pilih wilayah tugas untuk akun admin.');
+
+            return;
+        }
+
+        $attributes = [
+            'name' => $this->name,
+            'email' => $this->email,
+            'assigned_city_id' => $hasRegionalAdminRole ? $this->assignedCityId : null,
+        ];
         if ($this->password !== '') {
             $attributes['password'] = $this->password;
         }
 
-        $user = $this->editingId ? User::findOrFail($this->editingId) : new User();
+        $user = $this->editingId ? User::findOrFail($this->editingId) : new User;
         $user->fill($attributes);
         $user->save();
         $user->syncRoles($this->selectedRoles);
@@ -84,6 +113,7 @@ new #[Layout('layouts::admin')] class extends Component {
     {
         if ($id === auth()->id()) {
             session()->flash('toast', ['type' => 'error', 'message' => 'Akun yang sedang digunakan tidak dapat dihapus.']);
+
             return;
         }
 
@@ -93,7 +123,7 @@ new #[Layout('layouts::admin')] class extends Component {
 
     public function delete(): void
     {
-        if (!$this->deleteId || $this->deleteId === auth()->id()) {
+        if (! $this->deleteId || $this->deleteId === auth()->id()) {
             return;
         }
 
@@ -113,23 +143,24 @@ new #[Layout('layouts::admin')] class extends Component {
 
     private function resetForm(): void
     {
-        $this->reset(['modalOpen', 'editingId', 'name', 'email', 'password', 'selectedRoles']);
+        $this->reset(['modalOpen', 'editingId', 'name', 'email', 'password', 'selectedRoles', 'assignedCityId']);
         $this->resetValidation();
     }
 
     public function render(): mixed
     {
         return view('pages.master-data.⚡users', [
-            'users' => User::with('roles')
+            'users' => User::with(['roles', 'assignedCity'])
                 ->when(
                     $this->search !== '',
-                    fn($query) => $query->where(function ($query): void {
-                        $query->where('name', 'like', '%' . $this->search . '%')->orWhere('email', 'like', '%' . $this->search . '%');
+                    fn ($query) => $query->where(function ($query): void {
+                        $query->where('name', 'like', '%'.$this->search.'%')->orWhere('email', 'like', '%'.$this->search.'%');
                     }),
                 )
                 ->latest()
                 ->paginate(10),
             'roles' => Role::orderBy('display_name')->get(),
+            'cities' => City::where('is_active', true)->orderBy('name')->get(),
         ]);
     }
 };
@@ -193,12 +224,13 @@ new #[Layout('layouts::admin')] class extends Component {
                         </svg>Memuat data...
                     </div>
                 </div>
-                <table class="w-full min-w-170 text-left text-sm">
+                <table class="w-full min-w-200 text-left text-sm">
                     <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                         <tr>
                             <th class="px-6 py-4">User</th>
                             <th class="px-6 py-4">Email</th>
                             <th class="px-6 py-4">Peran</th>
+                            <th class="px-6 py-4">Wilayah Tugas</th>
                             <th class="px-6 py-4">Terdaftar</th>
                             <th class="px-6 py-4 text-right">Aksi</th>
                         </tr>
@@ -223,6 +255,7 @@ new #[Layout('layouts::admin')] class extends Component {
                                         @endforelse
                                     </div>
                                 </td>
+                                <td class="px-6 py-4 text-slate-600">{{ $user->assignedCity?->name ?? '-' }}</td>
                                 <td class="px-6 py-4 text-slate-500">{{ $user->created_at?->format('d M Y') }}</td>
                                 <td class="px-6 py-4">
                                     <div class="flex justify-end gap-2"><button type="button"
@@ -244,7 +277,7 @@ new #[Layout('layouts::admin')] class extends Component {
                                     </div>
                                 </td>
                         </tr>@empty<tr>
-                                <td colspan="5" class="px-6 py-12 text-center text-sm text-slate-500">Belum ada
+                                <td colspan="6" class="px-6 py-12 text-center text-sm text-slate-500">Belum ada
                                     user.</td>
                             </tr>
                         @endforelse
@@ -308,6 +341,19 @@ new #[Layout('layouts::admin')] class extends Component {
                             @endforelse
                         </div>
                         @error('selectedRoles')
+                            <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    <div>
+                        <label for="assigned-city" class="mb-1.5 block text-sm font-semibold text-slate-700">Wilayah tugas admin</label>
+                        <select id="assigned-city" wire:model="assignedCityId" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-brand-500 focus:bg-white focus:ring-4 focus:ring-brand-100">
+                            <option value="">Pilih wilayah (wajib untuk Admin/Admin Wilayah)</option>
+                            @foreach ($cities as $city)
+                                <option value="{{ $city->id }}">{{ $city->name }}</option>
+                            @endforeach
+                        </select>
+                        <p class="mt-1 text-xs text-slate-500">Wilayah ini membatasi titik armada yang dapat dilaporkan admin.</p>
+                        @error('assignedCityId')
                             <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
                         @enderror
                     </div>

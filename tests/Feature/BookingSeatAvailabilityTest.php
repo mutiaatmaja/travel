@@ -6,12 +6,16 @@ use App\Models\Booking;
 use App\Models\BookingSeat;
 use App\Models\City;
 use App\Models\Outlet;
+use App\Models\Permission;
+use App\Models\Role;
 use App\Models\RouteStop;
 use App\Models\TravelRoute;
 use App\Models\Trip;
+use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\VehicleSeat;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class BookingSeatAvailabilityTest extends TestCase
@@ -120,5 +124,50 @@ class BookingSeatAvailabilityTest extends TestCase
 
         $this->assertSame('confirmed', $booking->fresh()->status);
         $this->assertNotNull($booking->fresh()->confirmed_at);
+    }
+
+    public function test_fleet_condition_reports_trip_position_and_segment_passenger_flow(): void
+    {
+        ['trip' => $trip, 'stopPontianak' => $stopPontianak, 'stopSanggau' => $stopSanggau, 'stopSintang' => $stopSintang] = $this->makeTrip();
+        $trip->update(['status' => 'on_the_way', 'current_stop_id' => $stopPontianak->id]);
+
+        Booking::create([
+            'trip_id' => $trip->id,
+            'origin_stop_id' => $stopPontianak->id,
+            'destination_stop_id' => $stopSanggau->id,
+            'customer_name' => 'Turun di Sanggau',
+            'passenger_count' => 2,
+            'total_cost' => 500000,
+            'status' => 'confirmed',
+        ]);
+        Booking::create([
+            'trip_id' => $trip->id,
+            'origin_stop_id' => $stopSanggau->id,
+            'destination_stop_id' => $stopSintang->id,
+            'customer_name' => 'Naik di Sanggau',
+            'passenger_count' => 1,
+            'total_cost' => 150000,
+            'status' => 'pending',
+        ]);
+
+        $viewer = User::factory()->create();
+        $superAdminRole = Role::create(['name' => 'superadmin', 'display_name' => 'Super Admin']);
+        $viewPermission = Permission::create(['name' => 'fleet-condition.view-all', 'display_name' => 'Lihat Semua Armada']);
+        $updatePermission = Permission::create(['name' => 'fleet-position.update-any', 'display_name' => 'Laporkan Semua Posisi']);
+        $historyPermission = Permission::create(['name' => 'fleet-position.view-history', 'display_name' => 'Lihat Riwayat Posisi']);
+        $superAdminRole->permissions()->attach([$viewPermission->id, $updatePermission->id, $historyPermission->id]);
+        $viewer->addRole($superAdminRole);
+        $this->actingAs($viewer);
+
+        Livewire::test('pages::booking.fleet-condition')
+            ->set('selectedTripId', $trip->id)
+            ->call('reportNextStop')
+            ->assertHasNoErrors()
+            ->assertSee('1 naik')
+            ->assertSee('2 turun')
+            ->assertSee('Titik terakhir dilaporkan');
+
+        $this->assertSame($stopSanggau->id, $trip->fresh()->current_stop_id);
+        $this->assertNotNull($trip->fresh()->position_updated_at);
     }
 }

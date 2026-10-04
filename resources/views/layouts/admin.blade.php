@@ -75,6 +75,37 @@
         'section' => $section ?? 'Overview',
     ])
 
+    @php
+        $sidebarUser = auth()->user();
+        $canDashboard = $sidebarUser?->hasPermission('dashboard.view') ?? false;
+        $canUsers = $sidebarUser?->hasPermission('users.manage') ?? false;
+        $canRolePermissions = $sidebarUser?->hasPermission('roles-permissions.manage') ?? false;
+        $canMasterData = $sidebarUser?->hasPermission('master-data.manage') ?? false;
+        $canRouteFare = $sidebarUser?->hasPermission('route-fare.manage') ?? false;
+        $canPackages = $sidebarUser?->hasPermission('packages.manage') ?? false;
+        $canBooking = $sidebarUser?->hasPermission('booking.view') ?? false;
+        $canTrip = $sidebarUser?->hasPermission('trip.view') ?? false;
+        $canBookingSettings = $sidebarUser?->hasPermission('booking.settings.manage') ?? false;
+        $canFleetCondition = collect([
+            'fleet-condition.view-all',
+            'fleet-condition.view-assigned-trips',
+            'fleet-condition.view-own-trips',
+        ])->contains(fn (string $permission): bool => $sidebarUser?->hasPermission($permission) ?? false);
+        $canMasterDataMenu = $canMasterData || $canRouteFare || $canUsers || $canRolePermissions;
+        $canBookingMenu = $canBooking || $canTrip || $canBookingSettings || $canFleetCondition;
+        $logoRoute = match (true) {
+            $canDashboard => route('dashboard'),
+            $canFleetCondition => route('booking.fleet-condition'),
+            $canBooking => route('booking'),
+            $canTrip => route('booking.trips'),
+            $canPackages => route('packages'),
+            $canMasterData => route('cities'),
+            $canUsers => route('users'),
+            $canRolePermissions => route('roles-permissions'),
+            default => route('home'),
+        };
+    @endphp
+
     {{-- sidebar.open & desktopCollapsed murni state UI (bukan status "aktif"), jadi tetap Alpine --}}
     <div x-data="{ sidebar: { open: false, desktopCollapsed: false } }" class="h-screen bg-slate-50">
 
@@ -94,7 +125,7 @@
 
             <!-- Logo -->
             <div class="flex h-20 items-center justify-between border-b border-slate-100 px-4 lg:px-3">
-                <a wire:navigate href="{{ route('dashboard') }}" class="flex items-center gap-2">
+                <a wire:navigate href="{{ $logoRoute }}" class="flex items-center gap-2">
                     <img src="{{ asset('asetgambar/logo.png') }}" alt="TransGo"
                         class="h-10 w-10 shrink-0 rounded-xl object-cover">
 
@@ -128,6 +159,7 @@
                     {{-- =====================================================
                         DASHBOARD
                     ===================================================== --}}
+                    @if ($canDashboard)
                     <a wire:navigate href="{{ route('dashboard') }}"
                         class="menu-item {{ request()->routeIs('dashboard') ? 'menu-active' : '' }}">
                         <svg class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -139,10 +171,12 @@
                         </svg>
                         <span x-show="!sidebar.desktopCollapsed" x-cloak>Dashboard</span>
                     </a>
+                    @endif
 
                     {{-- =====================================================
                         MASTER DATA
                     ===================================================== --}}
+                    @if ($canMasterDataMenu)
                     <div x-data="{
                         open: {{ request()->routeIs([
                             'users',
@@ -174,14 +208,19 @@
                         </button>
 
                         <div class="submenu" x-show="!sidebar.desktopCollapsed" x-cloak>
+                            @if ($canUsers)
                             <a wire:navigate href="{{ route('users') }}"
                                 class="submenu-item {{ request()->routeIs('users') ? 'menu-active' : '' }}">
                                 Users
                             </a>
+                            @endif
+                            @if ($canRolePermissions)
                             <a wire:navigate href="{{ route('roles-permissions') }}"
                                 class="submenu-item {{ request()->routeIs('roles-permissions') ? 'menu-active' : '' }}">
                                 Peran & Ijin
                             </a>
+                            @endif
+                            @if ($canMasterData)
                             <a wire:navigate href="{{ route('cities') }}"
                                 class="submenu-item {{ request()->routeIs('cities') ? 'menu-active' : '' }}">
                                 Wilayah
@@ -206,16 +245,21 @@
                                 class="submenu-item {{ request()->routeIs('trips') ? 'menu-active' : '' }}">
                                 Jadwal
                             </a>
+                            @endif
+                            @if ($canRouteFare)
                             <a wire:navigate href="{{ route('route-fares') }}"
                                 class="submenu-item {{ request()->routeIs('route-fares') ? 'menu-active' : '' }}">
                                 Tarif Antar Titik
                             </a>
+                            @endif
                         </div>
                     </div>
+                    @endif
 
                     {{-- =====================================================
                         PAKET
                     ===================================================== --}}
+                    @if ($canPackages)
                     <div x-data="{
                         open: {{ request()->routeIs(['packages.statistics', 'packages.settings', 'packages', 'packages.tracing'])
                             ? 'true'
@@ -254,10 +298,12 @@
                             </a>
                         </div>
                     </div>
+                    @endif
 
                     {{-- =====================================================
                         BOOKING
                     ===================================================== --}}
+                    @if ($canBookingMenu)
                     <div x-data="{
                         open: {{ request()->routeIs(['booking', 'booking.status', 'booking.settings', 'booking.fleet-condition', 'booking.trips']) ? 'true' : 'false' }}
                     }" :class="open ? 'menu-open' : 'menu-closed'">
@@ -277,10 +323,13 @@
                         </button>
 
                         <div class="submenu" x-show="!sidebar.desktopCollapsed" x-cloak>
+                            @if ($canTrip)
                             <a wire:navigate href="{{ route('booking.trips') }}"
                                 class="submenu-item {{ request()->routeIs('booking.trips') ? 'menu-active' : '' }}">
                                 Perjalanan / Trip
                             </a>
+                            @endif
+                            @if ($canBooking)
                             <a wire:navigate href="{{ route('booking') }}"
                                 class="submenu-item {{ request()->routeIs('booking') ? 'menu-active' : '' }}">
                                 Booking
@@ -289,31 +338,23 @@
                                 class="submenu-item {{ request()->routeIs('booking.status') ? 'menu-active' : '' }}">
                                 Status Booking
                             </a>
+                            @endif
+                            @if ($canFleetCondition)
                             <a wire:navigate href="{{ route('booking.fleet-condition') }}"
                                 class="submenu-item {{ request()->routeIs('booking.fleet-condition') ? 'menu-active' : '' }}">
                                 Kondisi Armada
                             </a>
+                            @endif
 
+                            @if ($canBookingSettings)
                             <a wire:navigate href="{{ route('booking.settings') }}"
                                 class="submenu-item {{ request()->routeIs('booking.settings') ? 'menu-active' : '' }}">
                                 Pengaturan Booking
                             </a>
+                            @endif
                         </div>
                     </div>
-
-                    <a wire:navigate href="{{ route('dashboard') }}"
-                        class="menu-item {{ request()->routeIs('laporan.*') ? 'menu-active' : '' }}">
-                        <span
-                            class="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-slate-100 text-[10px] font-extrabold text-slate-500">L</span>
-                        <span x-show="!sidebar.desktopCollapsed" x-cloak>Laporan</span>
-                    </a>
-
-                    <a wire:navigate href="{{ route('dashboard') }}"
-                        class="menu-item {{ request()->routeIs('pengaturan.*') ? 'menu-active' : '' }}">
-                        <span
-                            class="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-slate-100 text-[10px] font-extrabold text-slate-500">P</span>
-                        <span x-show="!sidebar.desktopCollapsed" x-cloak>Pengaturan</span>
-                    </a>
+                    @endif
 
                 </div>
             </nav>

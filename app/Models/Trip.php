@@ -9,7 +9,7 @@ use Illuminate\Support\Carbon;
 
 class Trip extends Model
 {
-    protected $fillable = ['travel_route_id', 'vehicle_id', 'driver_id', 'departure_date', 'departure_time', 'estimated_arrival_time', 'status'];
+    protected $fillable = ['travel_route_id', 'vehicle_id', 'driver_id', 'departure_date', 'departure_time', 'estimated_arrival_time', 'status', 'current_stop_id', 'position_updated_at', 'position_updated_by'];
 
     protected static function booted(): void
     {
@@ -32,7 +32,10 @@ class Trip extends Model
 
     protected function casts(): array
     {
-        return ['departure_date' => 'date'];
+        return [
+            'departure_date' => 'date',
+            'position_updated_at' => 'datetime',
+        ];
     }
 
     public function travelRoute(): BelongsTo
@@ -53,5 +56,20 @@ class Trip extends Model
     public function bookings(): HasMany
     {
         return $this->hasMany(Booking::class);
+    }
+
+    public function currentStop(): BelongsTo
+    {
+        return $this->belongsTo(RouteStop::class, 'current_stop_id');
+    }
+
+    public function positionUpdatedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'position_updated_by');
+    }
+
+    public function positionReports(): HasMany
+    {
+        return $this->hasMany(TripPositionReport::class)->latest('reported_at');
     }
 }
