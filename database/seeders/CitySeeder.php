@@ -16,7 +16,7 @@ class CitySeeder extends Seeder
             ['code' => 'STG', 'name' => 'Sintang', 'province' => 'Kalimantan Barat'],
             ['code' => 'SMT', 'name' => 'Semitau', 'province' => 'Kalimantan Barat'],
         ] as $city) {
-            City::create([...$city, 'is_active' => true]);
+            City::updateOrCreate(['code' => $city['code']], [...$city, 'is_active' => true]);
         }
     }
 }

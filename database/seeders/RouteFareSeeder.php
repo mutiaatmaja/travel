@@ -2,9 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\Outlet;
-use App\Models\RouteFare;
-use App\Models\RouteStop;
 use App\Models\TravelRoute;
 use Illuminate\Database\Seeder;
 
@@ -12,44 +9,26 @@ class RouteFareSeeder extends Seeder
 {
     public function run(): void
     {
-        $outlets = Outlet::pluck('id', 'code');
-
-        $fares = [
-            ['route' => 'PNT-SMT', 'origin' => 'PNT-CENTER', 'destination' => 'SGG-CENTER', 'cost' => 250_000],
-            ['route' => 'PNT-SMT', 'origin' => 'PNT-CENTER', 'destination' => 'SDK-CENTER', 'cost' => 300_000],
-            ['route' => 'PNT-SMT', 'origin' => 'PNT-CENTER', 'destination' => 'STG-CENTER', 'cost' => 350_000],
-            ['route' => 'PNT-SMT', 'origin' => 'PNT-CENTER', 'destination' => 'SMT-CENTER', 'cost' => 450_000],
-            ['route' => 'SMT-PNT', 'origin' => 'SMT-CENTER', 'destination' => 'STG-CENTER', 'cost' => 150_000],
-            ['route' => 'SMT-PNT', 'origin' => 'SMT-CENTER', 'destination' => 'SDK-CENTER', 'cost' => 250_000],
-            ['route' => 'SMT-PNT', 'origin' => 'SMT-CENTER', 'destination' => 'SGG-CENTER', 'cost' => 350_000],
-            ['route' => 'SMT-PNT', 'origin' => 'SMT-CENTER', 'destination' => 'PNT-CENTER', 'cost' => 450_000],
-        ];
-
-        foreach ($fares as $fare) {
-            $route = TravelRoute::where('code', $fare['route'])->first();
-
-            if (! $route) {
-                continue;
+        foreach (TravelRoute::with('stops.outlet.city')->get() as $route) {
+            $stops = $route->stops->values();
+            foreach ($stops as $originIndex => $origin) {
+                foreach ($stops as $destinationIndex => $destination) {
+                    if ($destinationIndex <= $originIndex) {
+                        continue;
+                    }
+                    $cost = match ($destinationIndex - $originIndex) {
+                        1 => 150000, 2 => 250000, 3 => 350000, default => 450000,
+                    };
+                    if ($origin->outlet->city->code === 'PNT') {
+                        $cost = match ($destination->outlet->city->code) {
+                            'SGG' => 250000, 'SDK' => 300000, 'STG' => 350000, default => 450000,
+                        };
+                    }
+                    $route->fares()->updateOrCreate([
+                        'origin_stop_id' => $origin->id, 'destination_stop_id' => $destination->id,
+                    ], ['cost' => $cost, 'is_active' => true]);
+                }
             }
-
-            $originStop = RouteStop::where('travel_route_id', $route->id)->where('outlet_id', $outlets[$fare['origin']])->first();
-            $destinationStop = RouteStop::where('travel_route_id', $route->id)->where('outlet_id', $outlets[$fare['destination']])->first();
-
-            if (! $originStop || ! $destinationStop) {
-                continue;
-            }
-
-            RouteFare::updateOrCreate(
-                [
-                    'travel_route_id' => $route->id,
-                    'origin_stop_id' => $originStop->id,
-                    'destination_stop_id' => $destinationStop->id,
-                ],
-                [
-                    'cost' => $fare['cost'],
-                    'is_active' => true,
-                ],
-            );
         }
     }
 }

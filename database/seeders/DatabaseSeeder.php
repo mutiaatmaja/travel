@@ -2,15 +2,13 @@
 
 namespace Database\Seeders;
 
+use App\Models\City;
 use App\Models\Role;
 use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
     /**
      * Seed the application's database.
      */
@@ -54,8 +52,8 @@ class DatabaseSeeder extends Seeder
                 'description' => 'Akun boss.',
             ],
         ];
-        foreach ($peran as $key => $value) {
-            Role::create($value);
+        foreach ($peran as $value) {
+            Role::updateOrCreate(['name' => $value['name']], $value);
         }
         // membuat user
         $users = [
@@ -90,18 +88,33 @@ class DatabaseSeeder extends Seeder
                 'role' => 'pemilik',
             ],
         ];
+        $users = [...$users,
+            ['name' => 'Admin Wilayah Sekadau', 'email' => 'wilayah@example.com', 'role' => 'admin_wilayah'],
+            ['name' => 'Admin Wilayah Sintang', 'email' => 'wilayah.sintang@example.com', 'role' => 'admin_wilayah'],
+            ['name' => 'Supir Budi', 'email' => 'supir2@example.com', 'role' => 'supir'],
+            ['name' => 'Supir Andi', 'email' => 'supir3@example.com', 'role' => 'supir'],
+        ];
         foreach ($users as $value) {
-            $user = User::create([
+            $user = User::updateOrCreate(['email' => $value['email']], [
                 'name' => $value['name'],
                 'email' => $value['email'],
                 'password' => bcrypt('password'),
-            ])->addRole($value['role']);
+                'email_verified_at' => now(),
+            ]);
+            $user->syncRoles([$value['role']]);
 
         }
 
         $this->call([
             MasterDataSeeder::class,
             PermissionSeeder::class,
+            BookingSeeder::class,
+            PackageSettingSeeder::class,
+            PackageSeeder::class,
         ]);
+
+        foreach (['admin@example.com' => 'SDK', 'wilayah@example.com' => 'SDK', 'wilayah.sintang@example.com' => 'STG'] as $email => $cityCode) {
+            User::where('email', $email)->update(['assigned_city_id' => City::where('code', $cityCode)->value('id')]);
+        }
     }
 }

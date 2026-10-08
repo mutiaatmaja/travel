@@ -21,7 +21,7 @@ class RouteSeeder extends Seeder
         ];
 
         foreach ($routes as $routeData) {
-            $route = TravelRoute::create([
+            $route = TravelRoute::updateOrCreate(['code' => $routeData['code']], [
                 'code' => $routeData['code'],
                 'origin_city_id' => $cities[$routeData['origin']],
                 'destination_city_id' => $cities[$routeData['destination']],
@@ -33,7 +33,7 @@ class RouteSeeder extends Seeder
             ]);
 
             foreach ($routeData['stops'] as $index => $outletCode) {
-                RouteStop::create([
+                RouteStop::updateOrCreate(['travel_route_id' => $route->id, 'outlet_id' => $outlets[$outletCode]], [
                     'travel_route_id' => $route->id,
                     'outlet_id' => $outlets[$outletCode],
                     'stop_sequence' => $index + 1,

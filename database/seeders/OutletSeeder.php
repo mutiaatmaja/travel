@@ -19,7 +19,7 @@ class OutletSeeder extends Seeder
             ['city' => 'STG', 'code' => 'STG-CENTER', 'name' => 'Outlet Sintang Center', 'address' => 'Jl. Lintas Melawi No. 5, Sintang'],
             ['city' => 'SMT', 'code' => 'SMT-CENTER', 'name' => 'Outlet Semitau Center', 'address' => 'Jl. Lintas Kapuas No. 21, Semitau'],
         ] as $outlet) {
-            Outlet::create(['city_id' => $cities[$outlet['city']], 'code' => $outlet['code'], 'name' => $outlet['name'], 'address' => $outlet['address'], 'phone' => '0562-000000', 'is_active' => true]);
+            Outlet::updateOrCreate(['code' => $outlet['code']], ['city_id' => $cities[$outlet['city']], 'code' => $outlet['code'], 'name' => $outlet['name'], 'address' => $outlet['address'], 'phone' => '0562-000000', 'is_active' => true]);
         }
     }
 }
