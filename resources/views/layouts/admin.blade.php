@@ -379,15 +379,19 @@
                         </p>
                     </div>
 
-                    <!-- Logout -->
-                    <button type="button" class="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600"
-                        aria-label="Keluar">
-                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <path d="M10 17l5-5-5-5M15 12H3" />
-                            <path d="M21 19V5a2 2 0 0 0-2-2h-6" />
-                        </svg>
-                    </button>
+                    <form method="POST" action="{{ route('logout') }}"
+                        onsubmit="return window.confirm('Yakin ingin keluar?');">
+                        @csrf
+                        <!-- Logout -->
+                        <button type="submit" class="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600"
+                            aria-label="Keluar">
+                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M10 17l5-5-5-5M15 12H3" />
+                                <path d="M21 19V5a2 2 0 0 0-2-2h-6" />
+                            </svg>
+                        </button>
+                    </form>
 
                 </div>
             </div>
@@ -423,15 +427,18 @@
                         <h1 class="text-lg font-extrabold text-slate-900 sm:text-xl">{{ $title }}</h1>
                     </div>
                 </div>
-                <button type="button" wire:click="logout" wire:loading.attr="disabled"
-                    class="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-red-50 hover:text-red-600 disabled:opacity-50">
-                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M10 17l5-5-5-5M15 12H3" />
-                        <path d="M21 19V5a2 2 0 0 0-2-2h-6" />
-                    </svg>
-                    <span wire:loading.remove wire:target="logout">Keluar</span>
-                    <span wire:loading wire:target="logout">Keluar...</span>
-                </button>
+                <form method="POST" action="{{ route('logout') }}"
+                    onsubmit="return window.confirm('Yakin ingin keluar?');">
+                    @csrf
+                    <button type="submit"
+                        class="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-red-50 hover:text-red-600 disabled:opacity-50">
+                        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M10 17l5-5-5-5M15 12H3" />
+                            <path d="M21 19V5a2 2 0 0 0-2-2h-6" />
+                        </svg>
+                        <span>Keluar</span>
+                    </button>
+                </form>
             </header>
             <main class="mx-auto min-h-0 w-full max-w-7xl flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 lg:p-8">
                 {{ $slot }}

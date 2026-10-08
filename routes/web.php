@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\BookingTicketController;
+use App\Http\Controllers\LogoutController;
 use Illuminate\Support\Facades\Route;
 
 Route::livewire('/', 'pages::public.home')->name('home');
@@ -8,6 +9,8 @@ Route::livewire('/', 'pages::public.home')->name('home');
 Route::livewire('/login', 'pages::public.login')
     ->middleware('guest')
     ->name('login');
+
+Route::post('/logout', LogoutController::class)->middleware('auth')->name('logout');
 
 Route::livewire('/dashboard', 'pages::dashboard.index')
     ->middleware(['auth', 'permission:dashboard.view'])
