@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Booking;
 use App\Models\City;
 use App\Models\Outlet;
+use App\Models\Permission;
 use App\Models\RouteStop;
 use App\Models\TravelRoute;
 use App\Models\Trip;
@@ -51,7 +52,9 @@ class BookingTicketTest extends TestCase
 
     public function test_confirmed_booking_can_be_rendered_as_inline_pdf(): void
     {
-        $this->actingAs(User::factory()->create());
+        $user = User::factory()->create();
+        $user->givePermission(Permission::create(['name' => 'booking.view', 'display_name' => 'Lihat Booking']));
+        $this->actingAs($user);
         $booking = $this->createBooking('confirmed');
 
         $response = $this->get(route('booking.ticket', $booking));
@@ -63,7 +66,9 @@ class BookingTicketTest extends TestCase
 
     public function test_pending_booking_cannot_be_printed_as_a_ticket(): void
     {
-        $this->actingAs(User::factory()->create());
+        $user = User::factory()->create();
+        $user->givePermission(Permission::create(['name' => 'booking.view', 'display_name' => 'Lihat Booking']));
+        $this->actingAs($user);
         $booking = $this->createBooking('pending');
 
         $this->get(route('booking.ticket', $booking))->assertNotFound();

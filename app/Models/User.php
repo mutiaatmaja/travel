@@ -32,6 +32,30 @@ class User extends Authenticatable
         ];
     }
 
+    public function landingRouteName(): string
+    {
+        $destinations = [
+            'dashboard' => ['dashboard.view'],
+            'booking.fleet-condition' => ['fleet-condition.view-all', 'fleet-condition.view-assigned-trips', 'fleet-condition.view-own-trips'],
+            'booking' => ['booking.view'],
+            'booking.trips' => ['trip.view'],
+            'packages' => ['packages.manage'],
+            'cities' => ['master-data.manage'],
+            'route-fares' => ['route-fare.manage'],
+            'booking.settings' => ['booking.settings.manage'],
+            'users' => ['users.manage'],
+            'roles-permissions' => ['roles-permissions.manage'],
+        ];
+
+        foreach ($destinations as $routeName => $permissions) {
+            if ($this->hasPermission($permissions)) {
+                return $routeName;
+            }
+        }
+
+        return 'home';
+    }
+
     public function assignedCity(): BelongsTo
     {
         return $this->belongsTo(City::class, 'assigned_city_id');

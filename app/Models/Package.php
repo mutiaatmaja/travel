@@ -43,7 +43,13 @@ class Package extends Model
 
     public function trackingEvents(): HasMany
     {
-        return $this->hasMany(PackageTrackingEvent::class)->latest('occurred_at');
+        return $this->hasMany(PackageTrackingEvent::class)->latest('occurred_at')->latest('id');
+    }
+
+    public function syncTrackingStatus(): void
+    {
+        $latestStatus = $this->trackingEvents()->value('status') ?? 'pending';
+        $this->update(['status' => $latestStatus]);
     }
 
     public function calculateTotalCost(): int

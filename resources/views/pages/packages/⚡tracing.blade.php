@@ -1,12 +1,13 @@
 <?php
 
 use App\Models\Package;
-use App\Models\PackageTrackingEvent;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
-new #[Layout('layouts::admin')] class extends Component {
+new #[Layout('layouts::admin')] class extends Component
+{
     public string $title = 'Tracing Paket';
 
     public string $section = 'Paket';
@@ -53,17 +54,17 @@ new #[Layout('layouts::admin')] class extends Component {
             'occurredAt' => ['required', 'date'],
         ]);
 
-        $package = Package::findOrFail($this->selectedPackageId);
+        DB::transaction(function (): void {
+            $package = Package::query()->lockForUpdate()->findOrFail($this->selectedPackageId);
+            $package->trackingEvents()->create([
+                'status' => $this->status,
+                'location' => $this->location,
+                'description' => $this->description,
+                'occurred_at' => $this->occurredAt,
+            ]);
+            $this->status = $package->fresh()->status;
+        });
 
-        PackageTrackingEvent::create([
-            'package_id' => $package->id,
-            'status' => $this->status,
-            'location' => $this->location,
-            'description' => $this->description,
-            'occurred_at' => $this->occurredAt,
-        ]);
-
-        $package->update(['status' => $this->status]);
         $this->location = '';
         $this->description = '';
         $this->occurredAt = now()->format('Y-m-d\TH:i');
@@ -72,8 +73,12 @@ new #[Layout('layouts::admin')] class extends Component {
 
     public function deleteEvent(int $id): void
     {
-        $event = PackageTrackingEvent::where('package_id', $this->selectedPackageId)->findOrFail($id);
-        $event->delete();
+        DB::transaction(function () use ($id): void {
+            $package = Package::query()->lockForUpdate()->findOrFail($this->selectedPackageId);
+            $event = $package->trackingEvents()->findOrFail($id);
+            $event->delete();
+            $this->status = $package->fresh()->status;
+        });
         session()->flash('toast', ['type' => 'success', 'message' => 'Riwayat tracing berhasil dihapus.']);
     }
 
@@ -89,7 +94,7 @@ new #[Layout('layouts::admin')] class extends Component {
     {
         $packages = Package::query()
             ->with('packageSetting')
-            ->when($this->search !== '', fn($query) => $query->where('code', 'like', '%' . $this->search . '%')->orWhere('customer_name', 'like', '%' . $this->search . '%'))
+            ->when($this->search !== '', fn ($query) => $query->where('code', 'like', '%'.$this->search.'%')->orWhere('customer_name', 'like', '%'.$this->search.'%'))
             ->latest()
             ->limit(20)
             ->get();

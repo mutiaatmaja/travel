@@ -11,8 +11,12 @@ class PackageTrackingEvent extends Model
 
     protected static function booted(): void
     {
-        static::created(function (PackageTrackingEvent $event): void {
-            $event->package()->update(['status' => $event->status]);
+        static::saved(function (PackageTrackingEvent $event): void {
+            $event->package()->firstOrFail()->syncTrackingStatus();
+        });
+
+        static::deleted(function (PackageTrackingEvent $event): void {
+            $event->package()->firstOrFail()->syncTrackingStatus();
         });
     }
 

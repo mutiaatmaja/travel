@@ -3,7 +3,8 @@
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
-new class extends Component {
+new class extends Component
+{
     public string $email = '';
 
     public string $password = '';
@@ -13,7 +14,7 @@ new class extends Component {
     public function mount(): void
     {
         if (Auth::check()) {
-            $this->redirectRoute('dashboard', navigate: true);
+            $this->redirectRoute(Auth::user()->landingRouteName(), navigate: true);
         }
     }
 
@@ -24,16 +25,16 @@ new class extends Component {
             'password' => ['required', 'string'],
         ]);
 
-        if (!Auth::attempt($credentials, $this->remember)) {
+        if (! Auth::attempt($credentials, $this->remember)) {
             $this->addError('email', 'Email atau password yang kamu masukkan tidak sesuai.');
             session()->flash('toast', ['type' => 'error', 'message' => 'Login gagal. Periksa kembali email dan password kamu.']);
 
             return;
         }
 
-        request()->session()->regenerate();
+        session()->regenerate();
         session()->flash('toast', ['type' => 'success', 'message' => 'Login berhasil. Selamat datang kembali!']);
-        $this->redirectRoute('dashboard', navigate: true);
+        $this->redirectRoute(Auth::user()->landingRouteName(), navigate: true);
     }
 };
 ?>

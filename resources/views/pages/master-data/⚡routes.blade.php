@@ -4,37 +4,58 @@ use App\Models\City;
 use App\Models\Outlet;
 use App\Models\RouteStop;
 use App\Models\TravelRoute;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
 
-new #[Layout('layouts::admin')] class extends Component {
+new #[Layout('layouts::admin')] class extends Component
+{
     use WithPagination;
+
     public string $title = 'Rute';
+
     public string $section = 'Master Data';
+
     public string $search = '';
+
     public bool $modalOpen = false;
+
     public bool $confirmDeleteOpen = false;
+
     public ?int $editingId = null;
+
     public ?int $deleteId = null;
+
     public ?int $originCityId = null;
+
     public ?int $destinationCityId = null;
+
     public string $code = '';
+
     public string $name = '';
+
     public int $duration = 240;
+
     public int $cost = 0;
+
     public ?float $distance = null;
+
     public array $selectedStops = [];
+
     public function updatingSearch(): void
     {
         $this->resetPage();
     }
+
     public function openCreate(): void
     {
         $this->resetForm();
         $this->modalOpen = true;
     }
+
     public function openEdit(int $id): void
     {
         $route = TravelRoute::with('stops')->findOrFail($id);
@@ -46,28 +67,72 @@ new #[Layout('layouts::admin')] class extends Component {
         $this->duration = $route->estimated_duration_minutes;
         $this->cost = (int) $route->cost;
         $this->distance = $route->distance_km;
-        $this->selectedStops = $route->stops->sortBy('stop_sequence')->pluck('outlet_id')->map(fn(int $id): string => (string) $id)->all();
+        $this->selectedStops = $route->stops->sortBy('stop_sequence')->pluck('outlet_id')->map(fn (int $id): string => (string) $id)->all();
         $this->resetValidation();
         $this->modalOpen = true;
     }
+
     public function save(): void
     {
         $this->validate(['code' => ['required', Rule::unique('travel_routes', 'code')->ignore($this->editingId)], 'name' => ['required', 'max:255'], 'originCityId' => ['required', 'exists:cities,id'], 'destinationCityId' => ['required', 'different:originCityId', 'exists:cities,id'], 'duration' => ['required', 'integer', 'min:1'], 'cost' => ['required', 'integer', 'min:0'], 'distance' => ['nullable', 'numeric', 'min:0'], 'selectedStops' => ['required', 'array', 'min:2'], 'selectedStops.*' => ['integer', 'distinct', 'exists:outlets,id']]);
-        $route = TravelRoute::updateOrCreate(['id' => $this->editingId], ['code' => strtoupper($this->code), 'name' => $this->name, 'origin_city_id' => $this->originCityId, 'destination_city_id' => $this->destinationCityId, 'estimated_duration_minutes' => $this->duration, 'distance_km' => $this->distance, 'cost' => $this->cost, 'is_active' => true]);
-        RouteStop::where('travel_route_id', $route->id)->delete();
-        foreach ($this->selectedStops as $index => $outletId) {
-            RouteStop::create(['travel_route_id' => $route->id, 'stop_sequence' => $index + 1, 'outlet_id' => $outletId, 'arrival_offset_minutes' => $index * 60, 'departure_offset_minutes' => $index * 60 + 10, 'is_boarding_allowed' => true, 'is_dropoff_allowed' => true]);
-        }
+        DB::transaction(function (): void {
+            $route = $this->editingId
+                ? TravelRoute::query()->lockForUpdate()->findOrFail($this->editingId)
+                : new TravelRoute;
+            $existingStops = $route->exists ? $route->stops()->get() : collect();
+            $selectedOutletIds = array_map('intval', array_values($this->selectedStops));
+            $stopsChanged = $existingStops->pluck('outlet_id')->all() !== $selectedOutletIds;
+            $citiesChanged = $route->exists && (
+                $route->origin_city_id !== $this->originCityId
+                || $route->destination_city_id !== $this->destinationCityId
+            );
+
+            if ($route->exists && ($stopsChanged || $citiesChanged) && ($route->fares()->exists() || $route->trips()->exists())) {
+                throw ValidationException::withMessages([
+                    'selectedStops' => 'Kota dan urutan stop tidak dapat diubah karena rute sudah memiliki tarif antar titik atau Trip. Buat rute baru untuk susunan yang berbeda.',
+                ]);
+            }
+
+            $route->fill([
+                'code' => strtoupper($this->code),
+                'name' => $this->name,
+                'origin_city_id' => $this->originCityId,
+                'destination_city_id' => $this->destinationCityId,
+                'estimated_duration_minutes' => $this->duration,
+                'distance_km' => $this->distance,
+                'cost' => $this->cost,
+            ]);
+            if (! $route->exists) {
+                $route->is_active = true;
+            }
+            $route->save();
+
+            if ($stopsChanged) {
+                $route->stops()->delete();
+                foreach ($selectedOutletIds as $index => $outletId) {
+                    $route->stops()->create([
+                        'stop_sequence' => $index + 1,
+                        'outlet_id' => $outletId,
+                        'arrival_offset_minutes' => $index * 60,
+                        'departure_offset_minutes' => $index * 60 + 10,
+                        'is_boarding_allowed' => true,
+                        'is_dropoff_allowed' => true,
+                    ]);
+                }
+            }
+        });
         $message = $this->editingId ? 'Rute berhasil diperbarui.' : 'Rute berhasil ditambahkan.';
         $this->modalOpen = false;
         $this->resetForm();
         session()->flash('toast', ['type' => 'success', 'message' => $message]);
     }
+
     public function confirmDelete(int $id): void
     {
         $this->deleteId = $id;
         $this->confirmDeleteOpen = true;
     }
+
     public function delete(): void
     {
         TravelRoute::findOrFail($this->deleteId)->delete();
@@ -75,6 +140,7 @@ new #[Layout('layouts::admin')] class extends Component {
         $this->deleteId = null;
         session()->flash('toast', ['type' => 'success', 'message' => 'Rute berhasil dihapus.']);
     }
+
     public function logout(): void
     {
         auth()->logout();
@@ -82,6 +148,7 @@ new #[Layout('layouts::admin')] class extends Component {
         request()->session()->regenerateToken();
         $this->redirectRoute('login', navigate: true);
     }
+
     private function resetForm(): void
     {
         $this->reset(['modalOpen', 'editingId', 'deleteId', 'originCityId', 'destinationCityId', 'code', 'name', 'distance', 'cost', 'selectedStops']);
@@ -89,11 +156,12 @@ new #[Layout('layouts::admin')] class extends Component {
         $this->cost = 0;
         $this->resetValidation();
     }
+
     public function render(): mixed
     {
         return view('pages.master-data.⚡routes', [
             'routes' => TravelRoute::with(['originCity', 'destinationCity', 'stops.outlet'])
-                ->when($this->search !== '', fn($q) => $q->where('name', 'like', '%' . $this->search . '%')->orWhere('code', 'like', '%' . $this->search . '%'))
+                ->when($this->search !== '', fn ($q) => $q->where('name', 'like', '%'.$this->search.'%')->orWhere('code', 'like', '%'.$this->search.'%'))
                 ->latest()
                 ->paginate(10),
             'cities' => City::orderBy('name')->get(),
@@ -203,6 +271,9 @@ new #[Layout('layouts::admin')] class extends Component {
                             @endforeach
                         </div>
                     </div>
+                    @error('selectedStops')
+                        <p class="text-sm text-red-500" role="alert">{{ $message }}</p>
+                    @enderror
                     <div class="flex justify-end gap-3"><button type="button" wire:click="$set('modalOpen', false)"
                             class="rounded-xl border px-5 py-3 text-sm font-bold">Batal</button><button
                             wire:loading.attr="disabled"

@@ -8,11 +8,13 @@ use App\Models\RouteStop;
 use App\Models\Trip;
 use App\Models\VehicleSeat;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
 
-new #[Layout('layouts::admin', ['title' => 'Booking', 'section' => 'Booking'])] class extends Component {
+new #[Layout('layouts::admin', ['title' => 'Booking', 'section' => 'Booking'])] class extends Component
+{
     use WithPagination;
 
     public string $title = 'Booking';
@@ -107,12 +109,16 @@ new #[Layout('layouts::admin', ['title' => 'Booking', 'section' => 'Booking'])] 
 
     public function openCreate(): void
     {
+        abort_unless(auth()->user()?->hasPermission('booking.create'), 403);
+
         $this->resetForm();
         $this->modalOpen = true;
     }
 
     public function save(): void
     {
+        abort_unless(auth()->user()?->hasPermission('booking.create'), 403);
+
         $this->validate([
             'tripId' => ['required', 'exists:trips,id'],
             'originStopId' => ['required', 'exists:route_stops,id'],
@@ -120,46 +126,62 @@ new #[Layout('layouts::admin', ['title' => 'Booking', 'section' => 'Booking'])] 
             'customerName' => ['required', 'max:255'],
             'phone' => ['nullable', 'max:30'],
             'passengerCount' => ['required', 'integer', 'min:1'],
+            'selectedSeatIds' => ['required', 'array'],
+            'selectedSeatIds.*' => ['required', 'integer', 'distinct'],
         ]);
 
-        $trip = Trip::findOrFail($this->tripId);
-        $originStop = RouteStop::where('travel_route_id', $trip->travel_route_id)->findOrFail($this->originStopId);
-        $destinationStop = RouteStop::where('travel_route_id', $trip->travel_route_id)->findOrFail($this->destinationStopId);
+        $booking = DB::transaction(function (): Booking {
+            $trip = Trip::query()->lockForUpdate()->findOrFail($this->tripId);
+            if (! in_array($trip->status, ['scheduled', 'boarding'], true)) {
+                throw ValidationException::withMessages([
+                    'tripId' => 'Trip ini sudah tidak menerima pemesanan. Silakan pilih Trip lain.',
+                ]);
+            }
+            $originStop = RouteStop::where('travel_route_id', $trip->travel_route_id)->findOrFail($this->originStopId);
+            $destinationStop = RouteStop::where('travel_route_id', $trip->travel_route_id)->findOrFail($this->destinationStopId);
 
-        if ($originStop->stop_sequence >= $destinationStop->stop_sequence) {
-            $this->addError('destinationStopId', 'Titik tujuan harus berada setelah titik naik.');
+            if ($originStop->stop_sequence >= $destinationStop->stop_sequence) {
+                throw ValidationException::withMessages([
+                    'destinationStopId' => 'Titik tujuan harus berada setelah titik naik.',
+                ]);
+            }
 
-            return;
-        }
+            $bookingSetting = BookingSetting::where('is_active', true)->first();
+            $maxPassengers = $bookingSetting->max_passengers ?? 8;
 
-        $bookingSetting = BookingSetting::where('is_active', true)->first();
-        $maxPassengers = $bookingSetting->max_passengers ?? 8;
+            if ($this->passengerCount > $maxPassengers) {
+                throw ValidationException::withMessages([
+                    'passengerCount' => "Maksimal {$maxPassengers} penumpang per booking.",
+                ]);
+            }
 
-        if ($this->passengerCount > $maxPassengers) {
-            $this->addError('passengerCount', "Maksimal {$maxPassengers} penumpang per booking.");
+            $selectedSeatIds = array_map('intval', array_values($this->selectedSeatIds));
+            if (count($selectedSeatIds) !== $this->passengerCount) {
+                throw ValidationException::withMessages([
+                    'selectedSeatIds' => 'Jumlah kursi yang dipilih harus sama dengan jumlah penumpang.',
+                ]);
+            }
 
-            return;
-        }
+            $availableSeatIds = Booking::availableSeatsForSegment($trip, $originStop, $destinationStop)->pluck('id')->all();
+            if (array_diff($selectedSeatIds, $availableSeatIds) !== []) {
+                throw ValidationException::withMessages([
+                    'selectedSeatIds' => 'Kursi yang dipilih sudah tidak tersedia pada segmen perjalanan ini. Silakan pilih kursi lain.',
+                ]);
+            }
 
-        $availableSeatIds = Booking::availableSeatsForSegment($trip, $originStop, $destinationStop)->pluck('id')->all();
-        $selectedSeatIds = array_values(array_intersect($this->selectedSeatIds, $availableSeatIds));
+            $fare = RouteFare::where('travel_route_id', $trip->travel_route_id)->where('origin_stop_id', $originStop->id)->where('destination_stop_id', $destinationStop->id)->where('is_active', true)->first();
+            if (! $fare) {
+                throw ValidationException::withMessages([
+                    'destinationStopId' => 'Tarif aktif untuk titik naik dan turun ini belum tersedia. Hubungi admin untuk mengatur tarif.',
+                ]);
+            }
+            $unitCost = $fare->cost;
 
-        if (count($selectedSeatIds) !== (int) $this->passengerCount) {
-            $this->addError('selectedSeatIds', 'Jumlah kursi yang dipilih harus sama dengan jumlah penumpang.');
-
-            return;
-        }
-
-        $fare = RouteFare::where('travel_route_id', $trip->travel_route_id)->where('origin_stop_id', $originStop->id)->where('destination_stop_id', $destinationStop->id)->where('is_active', true)->first();
-
-        $unitCost = $fare->cost ?? 0;
-
-        $booking = DB::transaction(function () use ($trip, $originStop, $destinationStop, $fare, $unitCost, $selectedSeatIds, $bookingSetting) {
             $booking = Booking::create([
                 'trip_id' => $trip->id,
                 'origin_stop_id' => $originStop->id,
                 'destination_stop_id' => $destinationStop->id,
-                'route_fare_id' => $fare?->id,
+                'route_fare_id' => $fare->id,
                 'customer_name' => $this->customerName,
                 'phone' => $this->phone,
                 'passenger_count' => $this->passengerCount,
@@ -181,6 +203,8 @@ new #[Layout('layouts::admin', ['title' => 'Booking', 'section' => 'Booking'])] 
 
     public function confirmPayment(int $id): void
     {
+        abort_unless(auth()->user()?->hasPermission('booking.confirm-payment'), 403);
+
         $booking = Booking::where('status', 'pending')->findOrFail($id);
         $booking->update([
             'status' => 'confirmed',
@@ -193,14 +217,34 @@ new #[Layout('layouts::admin', ['title' => 'Booking', 'section' => 'Booking'])] 
 
     public function confirmCancel(int $id): void
     {
+        abort_unless(auth()->user()?->hasPermission('booking.cancel'), 403);
+
+        $booking = Booking::findOrFail($id);
+        if (! in_array($booking->status, Booking::ACTIVE_STATUSES, true)) {
+            throw ValidationException::withMessages([
+                'cancelId' => 'Hanya booking menunggu pembayaran atau dikonfirmasi yang dapat dibatalkan.',
+            ]);
+        }
+
+        $this->resetValidation('cancelId');
         $this->cancelId = $id;
         $this->confirmCancelOpen = true;
     }
 
     public function cancelBooking(): void
     {
+        abort_unless(auth()->user()?->hasPermission('booking.cancel'), 403);
+
         $booking = Booking::findOrFail($this->cancelId);
-        $booking->update(['status' => 'cancelled', 'cancelled_at' => now()]);
+        $updated = Booking::whereKey($booking->id)
+            ->whereIn('status', Booking::ACTIVE_STATUSES)
+            ->update(['status' => 'cancelled', 'cancelled_at' => now()]);
+        if ($updated === 0) {
+            throw ValidationException::withMessages([
+                'cancelId' => 'Hanya booking menunggu pembayaran atau dikonfirmasi yang dapat dibatalkan.',
+            ]);
+        }
+        $this->resetValidation('cancelId');
         $this->confirmCancelOpen = false;
         $this->cancelId = null;
         session()->flash('toast', ['type' => 'success', 'message' => "Booking {$booking->booking_code} berhasil dibatalkan."]);
@@ -252,8 +296,8 @@ new #[Layout('layouts::admin', ['title' => 'Booking', 'section' => 'Booking'])] 
             'allSeats' => $allSeats,
             'occupiedSeatIds' => $occupiedSeatIds,
             'bookings' => Booking::with(['trip.travelRoute.originCity', 'trip.travelRoute.destinationCity', 'originStop.outlet', 'destinationStop.outlet', 'seats.vehicleSeat'])
-                ->when($this->search !== '', fn($query) => $query->where(fn($q) => $q->where('booking_code', 'like', '%' . $this->search . '%')->orWhere('customer_name', 'like', '%' . $this->search . '%')))
-                ->when($this->statusFilter !== '', fn($query) => $query->where('status', $this->statusFilter))
+                ->when($this->search !== '', fn ($query) => $query->where(fn ($q) => $q->where('booking_code', 'like', '%'.$this->search.'%')->orWhere('customer_name', 'like', '%'.$this->search.'%')))
+                ->when($this->statusFilter !== '', fn ($query) => $query->where('status', $this->statusFilter))
                 ->latest()
                 ->paginate(10),
             'stats' => [
@@ -268,6 +312,9 @@ new #[Layout('layouts::admin', ['title' => 'Booking', 'section' => 'Booking'])] 
 ?>
 
 <div>
+    @error('cancelId')
+        <p class="mb-6 rounded-xl bg-red-50 p-4 text-sm text-red-700" role="alert">{{ $message }}</p>
+    @enderror
     @if (session('toast'))
         <div
             class="mb-6 flex items-center gap-3 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-semibold text-green-700">
@@ -285,14 +332,16 @@ new #[Layout('layouts::admin', ['title' => 'Booking', 'section' => 'Booking'])] 
             <p class="mt-2 text-sm text-slate-500">Daftarkan penumpang pada trip yang tersedia dan kelola pembayarannya.
             </p>
         </div>
-        <button type="button" wire:click="openCreate" wire:loading.attr="disabled"
-            class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-500 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-brand-500/20 hover:bg-brand-600">
-            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 5v14M5 12h14" />
-            </svg>
-            <span wire:loading.remove wire:target="openCreate">Booking Baru</span>
-            <span wire:loading wire:target="openCreate">Membuka...</span>
-        </button>
+        @if (auth()->user()->hasPermission('booking.create'))
+            <button type="button" wire:click="openCreate" wire:loading.attr="disabled"
+                class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-500 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-brand-500/20 hover:bg-brand-600">
+                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 5v14M5 12h14" />
+                </svg>
+                <span wire:loading.remove wire:target="openCreate">Booking Baru</span>
+                <span wire:loading wire:target="openCreate">Membuka...</span>
+            </button>
+        @endif
     </div>
 
     <div class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -363,7 +412,7 @@ new #[Layout('layouts::admin', ['title' => 'Booking', 'section' => 'Booking'])] 
                                     class="rounded-full px-2.5 py-1 text-xs font-bold {{ $statusMap[$booking->status]['class'] ?? 'bg-slate-100 text-slate-600' }}">{{ $statusMap[$booking->status]['label'] ?? ucfirst($booking->status) }}</span>
                             </td>
                             <td class="px-6 py-4 text-right">
-                                @if ($booking->status === 'pending')
+                                @if ($booking->status === 'pending' && auth()->user()->hasPermission('booking.confirm-payment'))
                                     <button type="button" wire:click="confirmPayment({{ $booking->id }})"
                                         wire:loading.attr="disabled"
                                         class="px-2 text-xs font-bold text-green-600">Konfirmasi Bayar</button>
@@ -381,7 +430,7 @@ new #[Layout('layouts::admin', ['title' => 'Booking', 'section' => 'Booking'])] 
                                         Cetak PDF
                                     </a>
                                 @endif
-                                @if (in_array($booking->status, ['pending', 'confirmed']))
+                                @if (in_array($booking->status, ['pending', 'confirmed']) && auth()->user()->hasPermission('booking.cancel'))
                                     <button type="button" wire:click="confirmCancel({{ $booking->id }})"
                                         class="px-2 text-xs font-bold text-red-600">Batalkan</button>
                                 @endif
@@ -542,6 +591,9 @@ new #[Layout('layouts::admin', ['title' => 'Booking', 'section' => 'Booking'])] 
         <div class="fixed inset-0 z-60 flex items-center justify-center bg-slate-900/50 p-4">
             <div class="rounded-2xl bg-white p-6 shadow-xl">
                 <h2 class="font-extrabold">Batalkan booking?</h2>
+                @error('cancelId')
+                    <p class="mt-3 text-sm text-red-600" role="alert">{{ $message }}</p>
+                @enderror
                 <p class="mt-2 text-sm text-slate-500">Kursi yang terpakai akan dilepas untuk segmen ini.</p>
                 <div class="mt-5 flex justify-end gap-3">
                     <button wire:click="$set('confirmCancelOpen', false)"
