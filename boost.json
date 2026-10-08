@@ -7,13 +7,14 @@
     "mcp": true,
     "nightwatch": false,
     "packages": [
-        "maatwebsite/excel",
-        "spatie/laravel-pdf"
+        "spatie/laravel-pdf",
+        "maatwebsite/excel"
     ],
     "sail": false,
     "skills": [
         "infer-conventions",
         "laravel-best-practices",
+        "testing-best-practices",
         "livewire-development",
         "tailwindcss-development",
         "laravel-excel",
