@@ -246,128 +246,151 @@ new #[Layout('layouts::admin')] class extends Component {
     </div>
 
     @if ($modalOpen)
-        <div class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-900/50 p-4">
-            <div class="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-xl">
-                <h2 class="text-xl font-extrabold">{{ $editingId ? 'Edit' : 'Tambah' }} Paket</h2>
-                <form wire:submit="save" class="mt-5 space-y-4">
-                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <div>
-                            <label class="mb-1 block text-sm font-semibold text-slate-700">Pengaturan tarif</label>
-                            <select wire:model.live="packageSettingId"
-                                class="w-full rounded-xl border px-4 py-3 text-sm">
-                                <option value="">Pilih pengaturan tarif</option>
-                                @foreach ($packageSettings as $setting)
-                                    <option value="{{ $setting->id }}">{{ $setting->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div>
-                            <label class="mb-1 block text-sm font-semibold text-slate-700">Nomor paket</label>
-                            <input wire:model="code" readonly placeholder="Dibuat otomatis saat disimpan"
-                                class="w-full rounded-xl border bg-slate-50 px-4 py-3 text-sm text-slate-500">
-                        </div>
-                        <div class="sm:col-span-2">
-                            <label class="mb-1 block text-sm font-semibold text-slate-700">Nama pelanggan</label>
-                            <input wire:model="customerName" placeholder="Nama penerima atau pengirim"
-                                class="w-full rounded-xl border px-4 py-3 text-sm">
-                        </div>
-                        <div>
-                            <label class="mb-1 block text-sm font-semibold text-slate-700">Kategori Paket</label>
-                            <select wire:model="category" class="w-full rounded-xl border px-4 py-3 text-sm">
-                                <option value="">Pilih kategori paket</option>
-                                @foreach ($packageCategories as $option)
-                                    <option value="{{ $option->name }}">{{ $option->name }}</option>
-                                @endforeach
-                            </select>
-                            @error('category') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-                        </div>
-                        <div>
-                            <label class="mb-1 block text-sm font-semibold text-slate-700">Kategori Keuangan</label>
-                            <select wire:model="financialCategory" class="w-full rounded-xl border px-4 py-3 text-sm">
-                                <option value="">Pilih kategori keuangan</option>
-                                @foreach ($financialCategories as $option)
-                                    <option value="{{ $option->name }}">{{ $option->name }}</option>
-                                @endforeach
-                            </select>
-                            @error('financialCategory') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-                        </div>
-                        <div>
-                            <label class="mb-1 block text-sm font-semibold text-slate-700">Berat (kg)</label>
-                            <input wire:model.live="weightKg" type="number" step="0.01" min="0"
-                                placeholder="0,00" class="w-full rounded-xl border px-4 py-3 text-sm">
-                        </div>
-                        <div>
-                            <label class="mb-1 block text-sm font-semibold text-slate-700">Panjang (cm)</label>
-                            <input wire:model.live="lengthCm" type="number" step="0.01" min="0"
-                                placeholder="0,00" class="w-full rounded-xl border px-4 py-3 text-sm">
-                        </div>
-                        <div>
-                            <label class="mb-1 block text-sm font-semibold text-slate-700">Lebar (cm)</label>
-                            <input wire:model.live="widthCm" type="number" step="0.01" min="0"
-                                placeholder="0,00" class="w-full rounded-xl border px-4 py-3 text-sm">
-                        </div>
-                        <div>
-                            <label class="mb-1 block text-sm font-semibold text-slate-700">Tinggi (cm)</label>
-                            <input wire:model.live="heightCm" type="number" step="0.01" min="0"
-                                placeholder="0,00" class="w-full rounded-xl border px-4 py-3 text-sm">
-                        </div>
-                        <div class="sm:col-span-2">
-                            <label class="mb-1 block text-sm font-semibold text-slate-700">Status paket</label>
-                            <select wire:model="status" class="w-full rounded-xl border px-4 py-3 text-sm">
-                                <option value="pending">Pending</option>
-                                <option value="pickup">Pickup</option>
-                                <option value="in_transit">Dalam perjalanan</option>
-                                <option value="delivered">Terkirim</option>
-                                <option value="cancelled">Dibatalkan</option>
-                            </select>
-                        </div>
-                        <div class="sm:col-span-2">
-                            <label class="mb-1 block text-sm font-semibold text-slate-700">Deskripsi paket</label>
-                            <textarea wire:model="description" rows="3" placeholder="Tambahkan keterangan paket"
-                                class="w-full rounded-xl border px-4 py-3 text-sm"></textarea>
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 sm:p-4" role="dialog"
+            aria-modal="true" aria-labelledby="package-modal-title">
+            <div class="flex h-[100dvh] w-full max-w-7xl flex-col overflow-hidden bg-white shadow-2xl sm:h-[calc(100dvh-2rem)] sm:rounded-2xl">
+                <header class="flex shrink-0 items-center justify-between gap-4 border-b border-slate-200 px-5 py-4 sm:px-6">
+                    <div>
+                        <h2 id="package-modal-title" class="text-xl font-extrabold text-slate-900">{{ $editingId ? 'Edit' : 'Tambah' }} Paket</h2>
+                        <p class="mt-1 text-sm text-slate-500">Lengkapi data paket, kategori laporan, dan ukuran untuk menghitung ongkos.</p>
+                    </div>
+                    <button type="button" wire:click="$set('modalOpen', false)" wire:loading.attr="disabled" wire:target="save"
+                        aria-label="Tutup modal" class="rounded-lg px-3 py-2 text-2xl text-slate-500 hover:bg-slate-100 focus:ring-2 focus:ring-brand-500 disabled:opacity-60">&times;</button>
+                </header>
+                <form wire:submit="save" class="flex min-h-0 flex-1 flex-col">
+                    <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-slate-50 p-5 sm:p-6">
+                        <div class="grid grid-cols-1 items-start gap-5 lg:grid-cols-3">
+                            <div class="space-y-5 lg:col-span-2">
+                                <section class="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
+                                    <h3 class="font-bold text-slate-900">Informasi Paket</h3>
+                                    <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                        <div>
+                                            <label for="package-code" class="mb-1 block text-sm font-semibold">Nomor paket</label>
+                                            <input id="package-code" wire:model="code" readonly placeholder="Dibuat otomatis saat disimpan"
+                                                class="w-full rounded-lg border bg-slate-50 px-3 py-2.5 text-sm text-slate-500">
+                                        </div>
+                                        <div>
+                                            <label for="package-customer" class="mb-1 block text-sm font-semibold">Nama pelanggan</label>
+                                            <input id="package-customer" wire:model="customerName" placeholder="Nama penerima atau pengirim"
+                                                class="w-full rounded-lg border px-3 py-2.5 text-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-100">
+                                            @error('customerName') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                        </div>
+                                        <div class="sm:col-span-2">
+                                            <label for="package-description" class="mb-1 block text-sm font-semibold">Deskripsi paket <span class="font-normal text-slate-400">(opsional)</span></label>
+                                            <textarea id="package-description" wire:model="description" rows="2" placeholder="Isi paket atau keterangan penanganan"
+                                                class="w-full rounded-lg border px-3 py-2.5 text-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-100"></textarea>
+                                            @error('description') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                        </div>
+                                    </div>
+                                </section>
+                                <section class="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
+                                    <h3 class="font-bold text-slate-900">Kategori & Status</h3>
+                                    <p class="mt-1 text-xs text-slate-500">Kategori digunakan untuk pengelompokan laporan.</p>
+                                    <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
+                                        <div>
+                                            <label for="package-category" class="mb-1 block text-sm font-semibold">Kategori Paket</label>
+                                            <select id="package-category" wire:model="category" class="w-full rounded-lg border px-3 py-2.5 text-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-100">
+                                                <option value="">Pilih kategori paket</option>
+                                                @foreach ($packageCategories as $option)
+                                                    <option value="{{ $option->name }}">{{ $option->name }}</option>
+                                                @endforeach
+                                            </select>
+                                            @error('category') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                        </div>
+                                        <div>
+                                            <label for="package-financial-category" class="mb-1 block text-sm font-semibold">Kategori Keuangan</label>
+                                            <select id="package-financial-category" wire:model="financialCategory" class="w-full rounded-lg border px-3 py-2.5 text-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-100">
+                                                <option value="">Pilih kategori keuangan</option>
+                                                @foreach ($financialCategories as $option)
+                                                    <option value="{{ $option->name }}">{{ $option->name }}</option>
+                                                @endforeach
+                                            </select>
+                                            @error('financialCategory') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                        </div>
+                                        <div>
+                                            <label for="package-status" class="mb-1 block text-sm font-semibold">Status paket</label>
+                                            <select id="package-status" wire:model="status" class="w-full rounded-lg border px-3 py-2.5 text-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-100">
+                                                <option value="pending">Pending</option>
+                                                <option value="pickup">Pickup</option>
+                                                <option value="in_transit">Dalam perjalanan</option>
+                                                <option value="delivered">Terkirim</option>
+                                                <option value="cancelled">Dibatalkan</option>
+                                            </select>
+                                            @error('status') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                        </div>
+                                    </div>
+                                </section>
+                                <section class="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
+                                    <h3 class="font-bold text-slate-900">Berat & Dimensi</h3>
+                                    <p class="mt-1 text-xs text-slate-500">Masukkan berat aktual dalam kg dan ukuran paket dalam cm.</p>
+                                    <div class="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
+                                        @foreach (['weightKg' => 'Berat (kg)', 'lengthCm' => 'Panjang (cm)', 'widthCm' => 'Lebar (cm)', 'heightCm' => 'Tinggi (cm)'] as $field => $label)
+                                            <div wire:key="package-measurement-{{ $field }}">
+                                                <label for="package-{{ $field }}" class="mb-1 block text-sm font-semibold">{{ $label }}</label>
+                                                <input id="package-{{ $field }}" wire:model.live="{{ $field }}" type="number" step="0.01" min="0"
+                                                    placeholder="0,00" class="w-full rounded-lg border px-3 py-2.5 text-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-100">
+                                                @error($field) <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </section>
+                            </div>
+                            <aside class="space-y-4 lg:sticky lg:top-0">
+                                <section class="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
+                                    <h3 class="font-bold text-slate-900">Tarif & Estimasi Biaya</h3>
+                                    <label for="package-setting" class="mb-1 mt-4 block text-sm font-semibold">Pengaturan tarif</label>
+                                    <select id="package-setting" wire:model.live="packageSettingId" class="w-full rounded-lg border px-3 py-2.5 text-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-100">
+                                        <option value="">Pilih pengaturan tarif</option>
+                                        @foreach ($packageSettings as $setting)
+                                            <option value="{{ $setting->id }}">{{ $setting->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('packageSettingId') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                    <div class="mt-4 rounded-xl border border-brand-100 bg-brand-50 p-4 text-sm" aria-live="polite">
+                                        <p class="font-bold text-brand-700">Estimasi biaya</p>
+                                        @php
+                                            $selectedSetting = $packageSettings->firstWhere('id', (int) $packageSettingId);
+                                        @endphp
+                                        @if ($selectedSetting)
+                                            @php
+                                                $estimatedPackage = new App\Models\Package([
+                                                    'package_setting_id' => $selectedSetting->id,
+                                                    'weight_kg' => $weightKg,
+                                                    'length_cm' => $lengthCm,
+                                                    'width_cm' => $widthCm,
+                                                    'height_cm' => $heightCm,
+                                                ]);
+                                                $estimatedPackage->setRelation('packageSetting', $selectedSetting);
+                                                $estimated = $estimatedPackage->calculateTotalCost();
+                                            @endphp
+                                            <p class="mt-2 text-2xl font-extrabold text-brand-700">Rp{{ number_format($estimated, 0, ',', '.') }}</p>
+                                            <dl class="mt-4 space-y-3 text-xs text-slate-600">
+                                                <div><dt class="font-semibold">Metode perhitungan</dt><dd class="mt-1">{{ $selectedSetting->pricing_type === 'volume' ? 'Berat volumetrik' : 'Berat aktual' }}</dd></div>
+                                                <div><dt class="font-semibold">Tarif</dt><dd class="mt-1">Rp{{ number_format((int) ($selectedSetting->rate_per_kg ?? ($selectedSetting->rate_per_m3 ?? 0)), 0, ',', '.') }} / {{ $selectedSetting->pricing_type === 'volume' ? 'kg volumetrik' : 'kg' }}</dd></div>
+                                                <div><dt class="font-semibold">Biaya minimum</dt><dd class="mt-1">Rp{{ number_format((int) $selectedSetting->minimum_charge, 0, ',', '.') }}</dd></div>
+                                                @if ($selectedSetting->pricing_type === 'volume')
+                                                    <div><dt class="font-semibold">Berat volumetrik</dt><dd class="mt-1">{{ number_format(($lengthCm * $widthCm * $heightCm) / max((int) ($selectedSetting->volumetric_divisor ?? 6000), 1), 2, ',', '.') }} kg</dd></div>
+                                                    <div><dt class="font-semibold">Rumus</dt><dd class="mt-1">Panjang × lebar × tinggi ÷ {{ number_format((int) ($selectedSetting->volumetric_divisor ?? 6000), 0, ',', '.') }}</dd></div>
+                                                @endif
+                                            </dl>
+                                        @else
+                                            <p class="mt-2 text-slate-600">Pilih tarif dan isi ukuran paket untuk melihat estimasi ongkos.</p>
+                                        @endif
+                                    </div>
+                                    <p wire:loading wire:target="packageSettingId,weightKg,lengthCm,widthCm,heightCm" role="status" class="mt-3 text-xs text-brand-600">Memperbarui estimasi...</p>
+                                </section>
+                            </aside>
                         </div>
                     </div>
-
-                    <div class="rounded-xl border border-brand-100 bg-brand-50 p-3 text-sm">
-                        <p class="font-bold text-brand-700">Estimasi biaya</p>
-                        @if ($packageSettingId)
-                            @php($selectedSetting = $packageSettings->firstWhere('id', (int) $packageSettingId))
-                            @if ($selectedSetting)
-                                <p class="mt-1 text-slate-700">
-                                    @php(
-    $estimated = new App\Models\Package([
-        'package_setting_id' => $selectedSetting->id,
-        'weight_kg' => $weightKg,
-        'length_cm' => $lengthCm,
-        'width_cm' => $widthCm,
-        'height_cm' => $heightCm
-    ])->calculateTotalCost()
-)
-                                    Rp{{ number_format($estimated, 0, ',', '.') }}
-                                </p>
-                                @if ($selectedSetting->pricing_type === 'volume')
-                                    <p class="mt-1 text-xs text-slate-500">Berat volumetrik:
-                                        {{ number_format(($lengthCm * $widthCm * $heightCm) / max((int) ($selectedSetting->volumetric_divisor ?? 6000), 1), 2, ',', '.') }}
-                                        kg (dimensi /
-                                        {{ number_format((int) ($selectedSetting->volumetric_divisor ?? 6000), 0, ',', '.') }})
-                                    </p>
-                                @endif
-                            @endif
-                        @else
-                            <p class="mt-1 text-slate-500">Pilih pengaturan tarif untuk melihat estimasi biaya.</p>
-                        @endif
-                    </div>
-
-                    <div class="flex justify-end gap-3">
-                        <button type="button" wire:click="$set('modalOpen', false)"
-                            class="rounded-xl border px-5 py-3 text-sm font-bold">Batal</button>
-                        <button type="submit" wire:loading.attr="disabled"
-                            class="rounded-xl bg-brand-500 px-5 py-3 text-sm font-bold text-white">
-                            <span wire:loading.remove wire:target="save">Simpan</span>
-                            <span wire:loading wire:target="save">Menyimpan...</span>
+                    <footer class="flex shrink-0 items-center justify-end gap-3 border-t border-slate-200 bg-white px-5 py-4 sm:px-6">
+                        <button type="button" wire:click="$set('modalOpen', false)" wire:loading.attr="disabled" wire:target="save"
+                            class="rounded-xl border px-5 py-2.5 text-sm font-bold focus:ring-2 focus:ring-brand-500 disabled:opacity-60">Batal</button>
+                        <button type="submit" wire:loading.attr="disabled" wire:target="save"
+                            class="rounded-xl bg-brand-500 px-5 py-2.5 text-sm font-bold text-white focus:ring-2 focus:ring-brand-500 disabled:opacity-60">
+                            <span wire:loading.remove wire:target="save">Simpan Paket</span>
+                            <span wire:loading wire:target="save" role="status">Menyimpan...</span>
                         </button>
-                    </div>
+                    </footer>
                 </form>
             </div>
         </div>
