@@ -2,6 +2,7 @@
 
 use App\Models\Package;
 use App\Models\PackageSetting;
+use App\Models\PackageCategory;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -83,8 +84,8 @@ new #[Layout('layouts::admin')] class extends Component {
         $this->validate([
             'packageSettingId' => ['required', 'exists:package_settings,id'],
             'customerName' => ['required', 'max:255'],
-            'category' => ['required', Rule::in(Package::CATEGORIES)],
-            'financialCategory' => ['required', Rule::in(Package::FINANCIAL_CATEGORIES)],
+            'category' => ['required', Rule::exists('package_categories', 'name')->where('type', 'package')],
+            'financialCategory' => ['required', Rule::exists('package_categories', 'name')->where('type', 'financial')],
             'weightKg' => ['required', 'numeric', 'min:0'],
             'lengthCm' => ['required', 'numeric', 'min:0'],
             'widthCm' => ['required', 'numeric', 'min:0'],
@@ -161,6 +162,8 @@ new #[Layout('layouts::admin')] class extends Component {
                 ->latest()
                 ->paginate(10),
             'packageSettings' => PackageSetting::where('is_active', true)->orderBy('name')->get(),
+            'packageCategories' => PackageCategory::where('type', 'package')->orderBy('name')->get(),
+            'financialCategories' => PackageCategory::where('type', 'financial')->orderBy('name')->get(),
         ]);
     }
 };
@@ -273,8 +276,8 @@ new #[Layout('layouts::admin')] class extends Component {
                             <label class="mb-1 block text-sm font-semibold text-slate-700">Kategori Paket</label>
                             <select wire:model="category" class="w-full rounded-xl border px-4 py-3 text-sm">
                                 <option value="">Pilih kategori paket</option>
-                                @foreach (App\Models\Package::CATEGORIES as $option)
-                                    <option value="{{ $option }}">{{ $option }}</option>
+                                @foreach ($packageCategories as $option)
+                                    <option value="{{ $option->name }}">{{ $option->name }}</option>
                                 @endforeach
                             </select>
                             @error('category') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
@@ -283,8 +286,8 @@ new #[Layout('layouts::admin')] class extends Component {
                             <label class="mb-1 block text-sm font-semibold text-slate-700">Kategori Keuangan</label>
                             <select wire:model="financialCategory" class="w-full rounded-xl border px-4 py-3 text-sm">
                                 <option value="">Pilih kategori keuangan</option>
-                                @foreach (App\Models\Package::FINANCIAL_CATEGORIES as $option)
-                                    <option value="{{ $option }}">{{ $option }}</option>
+                                @foreach ($financialCategories as $option)
+                                    <option value="{{ $option->name }}">{{ $option->name }}</option>
                                 @endforeach
                             </select>
                             @error('financialCategory') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror

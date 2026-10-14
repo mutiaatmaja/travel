@@ -9,10 +9,6 @@ use Illuminate\Support\Str;
 
 class Package extends Model
 {
-    public const CATEGORIES = ['Ongoing', 'Ingoing'];
-
-    public const FINANCIAL_CATEGORIES = ['Cash', 'Kredit'];
-
     protected $fillable = ['package_setting_id', 'code', 'customer_name', 'weight_kg', 'length_cm', 'width_cm', 'height_cm', 'status', 'description', 'category', 'financial_category'];
 
     protected static function booted(): void

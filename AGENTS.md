@@ -1,3 +1,181 @@
+# Laravel AI Development Standards
+
+> These instructions are mandatory for AI coding agents working on this project.
+> They take precedence over inferred conventions and optional recommendations, while remaining subordinate to higher-priority system instructions.
+> Do not remove, overwrite, or modify the Laravel Boost guidelines block.
+
+## 1. Communication
+- ALWAYS communicate with the user in Bahasa Indonesia.
+- Use clear, concise, professional language.
+- Keep code identifiers, class names, and framework terminology in their conventional language.
+- Clearly distinguish verified facts, assumptions, recommendations, and unresolved questions.
+- Never claim success without verification.
+
+## 2. Mandatory Workflow: Inspect → Verify → Propose → Approve → Implement → Test → Report
+- ALWAYS inspect the relevant existing code before proposing implementation.
+- Perform read-only investigation first.
+- Present findings and an implementation plan BEFORE changing files.
+- The plan must include the problem, proposed solution, affected files, database or dependency changes, risks, and verification approach.
+- STOP and WAIT for explicit user approval before creating, editing, deleting, or renaming files, running migrations, installing packages, or executing other mutating operations.
+- A request to explain, analyze, review, debug, or propose does NOT authorize implementation.
+- Approval must be explicit and specific to the proposed scope.
+- Never treat silence or an ambiguous reply as approval.
+- After approval, implement only the approved scope.
+- If new requirements or out-of-scope changes emerge, explain them and request approval again.
+- Do not make unrelated improvements or silent fixes.
+- Read-only inspection and non-mutating diagnostic commands are permitted before approval.
+- If a diagnostic command could mutate project state, request approval first.
+- Never execute destructive commands without separate explicit approval, even after general implementation approval.
+
+## 3. Anti-Hallucination and Evidence
+- NEVER invent project files, routes, migrations, models, relationships, methods, APIs, package features, or test results.
+- Verify claims against the actual repository, installed dependencies, and version-specific documentation.
+- Use Laravel Boost tools and documentation when relevant and available.
+- Do not assume a package or feature exists merely because it is commonly used.
+- If something cannot be verified, explicitly state the limitation and ask for clarification when necessary.
+- Do not fabricate tool outputs or pretend that commands have been executed.
+- Never hide uncertainty behind confident language.
+- Diagnose root causes using available evidence before recommending a fix.
+
+## 4. Laravel Boost and Project Conventions
+- Read and follow the existing Laravel Boost guidelines.
+- Check framework and package versions before using version-sensitive APIs.
+- Prefer installed dependencies and established project patterns.
+- Use the infer-conventions skill when available and useful for initial project analysis or reassessing unclear conventions.
+- Do not run infer-conventions automatically for every small task.
+- Present inferred conventions and supporting evidence before writing or modifying project rules.
+- Never overwrite user-defined rules with inferred conventions.
+- If inferred conventions conflict with mandatory policies, report the conflict and follow the mandatory policies.
+- Keep Laravel Boost generated sections intact.
+
+## 5. Eloquent First and Database Standards
+- Prefer Eloquent ORM and model relationships.
+- Prefer Eloquent Query Builder, followed by Laravel Query Builder when appropriate.
+- Avoid raw SQL, DB::raw, whereRaw, selectRaw, orderByRaw, and similar methods unless technically justified.
+- If raw expressions are necessary, explain why safer or more idiomatic alternatives are insufficient.
+- Always use parameter binding for untrusted values; never interpolate user input into SQL.
+- Prevent N+1 queries through eager loading and appropriate relationship queries.
+- Use exists(), withCount(), aggregates, and database-side filtering when appropriate.
+- Avoid fetching entire datasets merely to count, filter, or paginate them.
+- Use pagination or chunking for large datasets as appropriate.
+- Use database transactions for logically atomic multi-step writes.
+- Use database constraints and indexes where justified.
+- Use migrations for schema changes.
+- Never alter production data or schema without explicit authorization.
+- Avoid querying databases inside loops when batching is feasible.
+
+## 6. CRUD and User Experience
+- Every asynchronous create, update, delete, upload, import, export, or other user-triggered action must provide visible loading feedback.
+- Disable the initiating button while its request is processing.
+- Prevent duplicate submissions; use server-side idempotency or constraints when the operation requires stronger guarantees.
+- Provide clear success and failure feedback.
+- Show field-level validation errors.
+- Require confirmation before destructive actions.
+- Handle empty states, loading states, and error states.
+- Preserve form input after validation failures where appropriate.
+- Use accessible labels, focus indicators, and understandable status messages.
+- Do not silently swallow exceptions or display raw exception details to end users.
+- Ensure buttons cannot be repeatedly triggered by accidental double clicks.
+
+## 7. Livewire Standards
+- Prefer native Livewire features over unnecessary custom JavaScript.
+- Use wire:loading, wire:target, and wire:loading.attr="disabled" where appropriate.
+- Scope loading indicators to the relevant action to avoid unrelated UI blocking.
+- Validate data on the server before persistence.
+- Authorize sensitive actions on the server, not only through UI visibility.
+- Keep components focused and avoid excessive business logic in presentation components.
+- Follow the installed Livewire version and existing component architecture.
+- Use reusable Blade or Livewire components when repetition justifies extraction.
+- Do not assume Livewire alone provides server-side idempotency.
+
+## 8. Security
+- Treat all external input as untrusted.
+- Validate and authorize operations on the server.
+- Use Policies, Gates, or the project's established permission system.
+- Protect against unsafe mass assignment by using validated and explicitly allowed data.
+- Use Laravel's built-in CSRF protection.
+- Never hardcode or expose credentials, API tokens, secrets, or private keys.
+- Do not log sensitive data unnecessarily.
+- Apply rate limiting to sensitive endpoints where appropriate.
+- Validate uploads, including type, size, storage location, and access permissions.
+- Use Hash for passwords and Laravel encryption when appropriate.
+- Avoid exposing internal errors, SQL statements, or stack traces to users.
+- Never run migrate:fresh, db:wipe, destructive deletes, or equivalent commands without separate explicit approval.
+
+## 9. Architecture and Maintainability
+- Follow existing project architecture and naming conventions.
+- Prefer the simplest solution that reliably meets requirements.
+- Keep simple CRUD implementations simple.
+- Extract complex or reusable business logic into Services or Actions when justified.
+- Do not automatically introduce Repository Patterns, interfaces, traits, or abstraction layers.
+- Follow existing module boundaries when the project uses modular architecture.
+- Prefer dependency injection where appropriate.
+- Avoid duplicate business logic and unnecessary code duplication.
+- Do not add third-party packages without explicit approval.
+- Avoid modifying unrelated files or performing unsolicited refactoring.
+- Preserve backward compatibility unless a breaking change is explicitly approved.
+
+## 10. Frontend and Styling
+- Follow the project's existing frontend stack and styling conventions.
+- Do not introduce Vite, npm packages, UI frameworks, or build tools unless requested or approved.
+- If the project uses Tailwind CDN, preserve that approach unless the user approves a change.
+- Prefer simple, modern, responsive, accessible interfaces.
+- Provide consistent loading, disabled, success, error, and empty states.
+- Avoid unnecessary JavaScript dependencies.
+- Do not replace existing UI components merely for stylistic preference.
+
+## 11. Performance and Reliability
+- Avoid unnecessary database queries, repeated external calls, and redundant computations.
+- Use eager loading and appropriate indexes when justified by the query pattern.
+- Use queues for long-running work when the project infrastructure supports them.
+- Do not introduce caching without considering invalidation and data freshness.
+- Consider concurrency, retries, race conditions, and duplicate operations for important workflows.
+- Avoid premature optimization; prefer measured or clearly justified improvements.
+- Consider compatibility with the existing database engine and deployment environment.
+
+## 12. Testing and Verification
+- After approved implementation, run relevant non-destructive tests and checks when possible.
+- Add or update tests for important behavior and bug fixes.
+- Verify validation, authorization, success, failure, and duplicate-submission behavior where relevant.
+- Use existing test frameworks and project conventions.
+- Run appropriate formatting and static checks when available.
+- Do not claim tests passed unless they actually ran and passed.
+- Clearly report tests that could not be executed and why.
+- Do not modify unrelated code merely to make tests pass.
+- Request approval before running checks that may mutate persistent data or project files beyond the approved scope.
+
+## 13. Completion Report
+After implementation, provide:
+1. Summary of implemented changes.
+2. Files created, modified, or deleted.
+3. Database, configuration, or dependency changes.
+4. Tests and checks actually performed, including results.
+5. Known limitations, unresolved issues, or risks.
+6. Any additional recommended improvements, clearly separated from approved work.
+
+## 14. Strict Prohibitions
+- NO implementation before explicit approval.
+- NO fabricated facts, APIs, test results, or project structures.
+- NO silent fixes or unrelated refactoring.
+- NO unnecessary raw SQL.
+- NO asynchronous CRUD without loading and double-submit protection.
+- NO destructive commands without separate explicit approval.
+- NO new dependencies without approval.
+- NO changing project architecture based only on AI preference.
+- NO overwriting Laravel Boost generated guidelines.
+- NO claiming a feature is complete without reporting actual verification status.
+
+## 15. Final Operating Principle
+INSPECT FIRST.
+VERIFY FACTS.
+PRESENT A PLAN.
+WAIT FOR EXPLICIT APPROVAL.
+IMPLEMENT ONLY THE APPROVED SCOPE.
+TEST WHAT CAN BE VERIFIED.
+REPORT RESULTS HONESTLY.
+
+If the user has not approved implementation, stop after the analysis and proposal.
+
 <laravel-boost-guidelines>
 === foundation rules ===
 

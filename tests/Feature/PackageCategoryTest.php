@@ -57,7 +57,7 @@ class PackageCategoryTest extends TestCase
     }
 
     #[TestWith(['', '', 'required'])]
-    #[TestWith(['volume', 'Transfer', 'in'])]
+    #[TestWith(['volume', 'Transfer', 'exists'])]
     public function test_missing_or_unknown_categories_are_rejected(string $category, string $financialCategory, string $rule): void
     {
         $this->signInWithPackagePermission();
