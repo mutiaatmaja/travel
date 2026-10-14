@@ -103,8 +103,18 @@ new #[Layout('layouts::admin')] class extends Component
                         <li wire:key="category-{{ $category->id }}" class="flex items-center justify-between gap-3 py-3 text-sm">
                             <span class="font-semibold text-slate-700">{{ $category->name }}</span>
                             <div class="flex gap-3">
-                                <button type="button" wire:click="openEdit({{ $category->id }})" class="font-bold text-brand-600">Edit</button>
-                                <button type="button" wire:click="confirmDelete({{ $category->id }})" class="font-bold text-red-600">Hapus</button>
+                                <button type="button" wire:click="openEdit({{ $category->id }})"
+                                    wire:loading.attr="disabled" wire:target="openEdit({{ $category->id }})"
+                                    class="font-bold text-brand-600 disabled:cursor-wait disabled:opacity-60">
+                                    <span wire:loading.remove wire:target="openEdit({{ $category->id }})">Edit</span>
+                                    <span wire:loading wire:target="openEdit({{ $category->id }})" role="status">Membuka...</span>
+                                </button>
+                                <button type="button" wire:click="confirmDelete({{ $category->id }})"
+                                    wire:loading.attr="disabled" wire:target="confirmDelete({{ $category->id }})"
+                                    class="font-bold text-red-600 disabled:cursor-wait disabled:opacity-60">
+                                    <span wire:loading.remove wire:target="confirmDelete({{ $category->id }})">Hapus</span>
+                                    <span wire:loading wire:target="confirmDelete({{ $category->id }})" role="status">Membuka...</span>
+                                </button>
                             </div>
                         </li>
                     @empty
@@ -134,8 +144,14 @@ new #[Layout('layouts::admin')] class extends Component
                         @error('name') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                     </div>
                     <div class="flex justify-end gap-3">
-                        <button type="button" wire:click="$set('modalOpen', false)" class="rounded-xl border px-5 py-3 text-sm font-bold">Batal</button>
-                        <button type="submit" wire:loading.attr="disabled" class="rounded-xl bg-brand-500 px-5 py-3 text-sm font-bold text-white">Simpan</button>
+                        <button type="button" wire:click="$set('modalOpen', false)"
+                            wire:loading.attr="disabled" wire:target="save"
+                            class="rounded-xl border px-5 py-3 text-sm font-bold disabled:cursor-wait disabled:opacity-60">Batal</button>
+                        <button type="submit" wire:loading.attr="disabled" wire:target="save"
+                            class="rounded-xl bg-brand-500 px-5 py-3 text-sm font-bold text-white disabled:cursor-wait disabled:opacity-60">
+                            <span wire:loading.remove wire:target="save">Simpan</span>
+                            <span wire:loading wire:target="save" role="status">Menyimpan...</span>
+                        </button>
                     </div>
                 </form>
             </div>
@@ -148,8 +164,14 @@ new #[Layout('layouts::admin')] class extends Component
                 <p class="mt-2 text-sm text-slate-500">Kategori yang masih digunakan paket tidak dapat dihapus.</p>
                 @error('deleteId') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
                 <div class="mt-5 flex justify-end gap-3">
-                    <button type="button" wire:click="$set('confirmDeleteOpen', false)" class="rounded-xl border px-4 py-2 text-sm font-bold">Batal</button>
-                    <button type="button" wire:click="delete" wire:loading.attr="disabled" class="rounded-xl bg-red-600 px-4 py-2 text-sm font-bold text-white">Hapus</button>
+                    <button type="button" wire:click="$set('confirmDeleteOpen', false)"
+                        wire:loading.attr="disabled" wire:target="delete"
+                        class="rounded-xl border px-4 py-2 text-sm font-bold disabled:cursor-wait disabled:opacity-60">Batal</button>
+                    <button type="button" wire:click="delete" wire:loading.attr="disabled" wire:target="delete"
+                        class="rounded-xl bg-red-600 px-4 py-2 text-sm font-bold text-white disabled:cursor-wait disabled:opacity-60">
+                        <span wire:loading.remove wire:target="delete">Hapus</span>
+                        <span wire:loading wire:target="delete" role="status">Menghapus...</span>
+                    </button>
                 </div>
             </div>
         </div>
