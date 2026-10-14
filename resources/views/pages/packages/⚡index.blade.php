@@ -2,6 +2,7 @@
 
 use App\Models\Package;
 use App\Models\PackageSetting;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -28,6 +29,10 @@ new #[Layout('layouts::admin')] class extends Component {
     public string $code = '';
 
     public string $customerName = '';
+
+    public string $category = '';
+
+    public string $financialCategory = '';
 
     public float $weightKg = 0;
 
@@ -60,6 +65,8 @@ new #[Layout('layouts::admin')] class extends Component {
         $this->packageSettingId = $package->package_setting_id;
         $this->code = $package->code;
         $this->customerName = $package->customer_name;
+        $this->category = $package->category ?? '';
+        $this->financialCategory = $package->financial_category ?? '';
         $this->weightKg = (float) $package->weight_kg;
         $this->lengthCm = (float) $package->length_cm;
         $this->widthCm = (float) $package->width_cm;
@@ -76,6 +83,8 @@ new #[Layout('layouts::admin')] class extends Component {
         $this->validate([
             'packageSettingId' => ['required', 'exists:package_settings,id'],
             'customerName' => ['required', 'max:255'],
+            'category' => ['required', Rule::in(Package::CATEGORIES)],
+            'financialCategory' => ['required', Rule::in(Package::FINANCIAL_CATEGORIES)],
             'weightKg' => ['required', 'numeric', 'min:0'],
             'lengthCm' => ['required', 'numeric', 'min:0'],
             'widthCm' => ['required', 'numeric', 'min:0'],
@@ -91,6 +100,8 @@ new #[Layout('layouts::admin')] class extends Component {
             [
                 'package_setting_id' => $this->packageSettingId,
                 'customer_name' => $this->customerName,
+                'category' => $this->category,
+                'financial_category' => $this->financialCategory,
                 'weight_kg' => $this->weightKg,
                 'length_cm' => $this->lengthCm,
                 'width_cm' => $this->widthCm,
@@ -136,6 +147,8 @@ new #[Layout('layouts::admin')] class extends Component {
         $this->widthCm = 0;
         $this->heightCm = 0;
         $this->status = 'pending';
+        $this->category = '';
+        $this->financialCategory = '';
         $this->description = '';
         $this->resetValidation();
     }
@@ -184,6 +197,8 @@ new #[Layout('layouts::admin')] class extends Component {
                     <tr>
                         <th class="px-6 py-4">Kode</th>
                         <th class="px-6 py-4">Pelanggan</th>
+                        <th class="px-6 py-4">Kategori Paket</th>
+                        <th class="px-6 py-4">Kategori Keuangan</th>
                         <th class="px-6 py-4">Tarif</th>
                         <th class="px-6 py-4">Berat</th>
                         <th class="px-6 py-4">Dimensi</th>
@@ -197,6 +212,8 @@ new #[Layout('layouts::admin')] class extends Component {
                         <tr>
                             <td class="px-6 py-4 font-bold">{{ $package->code }}</td>
                             <td class="px-6 py-4">{{ $package->customer_name }}</td>
+                            <td class="px-6 py-4">{{ $package->category ?? 'Belum dikategorikan' }}</td>
+                            <td class="px-6 py-4">{{ $package->financial_category ?? 'Belum dikategorikan' }}</td>
                             <td class="px-6 py-4">{{ $package->packageSetting?->name ?? '-' }}</td>
                             <td class="px-6 py-4">{{ $package->weight_kg }} kg</td>
                             <td class="px-6 py-4">
@@ -216,7 +233,7 @@ new #[Layout('layouts::admin')] class extends Component {
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="px-6 py-12 text-center text-slate-500">Belum ada paket.</td>
+                            <td colspan="10" class="px-6 py-12 text-center text-slate-500">Belum ada paket.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -251,6 +268,26 @@ new #[Layout('layouts::admin')] class extends Component {
                             <label class="mb-1 block text-sm font-semibold text-slate-700">Nama pelanggan</label>
                             <input wire:model="customerName" placeholder="Nama penerima atau pengirim"
                                 class="w-full rounded-xl border px-4 py-3 text-sm">
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-sm font-semibold text-slate-700">Kategori Paket</label>
+                            <select wire:model="category" class="w-full rounded-xl border px-4 py-3 text-sm">
+                                <option value="">Pilih kategori paket</option>
+                                @foreach (App\Models\Package::CATEGORIES as $option)
+                                    <option value="{{ $option }}">{{ $option }}</option>
+                                @endforeach
+                            </select>
+                            @error('category') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-sm font-semibold text-slate-700">Kategori Keuangan</label>
+                            <select wire:model="financialCategory" class="w-full rounded-xl border px-4 py-3 text-sm">
+                                <option value="">Pilih kategori keuangan</option>
+                                @foreach (App\Models\Package::FINANCIAL_CATEGORIES as $option)
+                                    <option value="{{ $option }}">{{ $option }}</option>
+                                @endforeach
+                            </select>
+                            @error('financialCategory') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label class="mb-1 block text-sm font-semibold text-slate-700">Berat (kg)</label>

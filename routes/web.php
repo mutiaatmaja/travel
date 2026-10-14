@@ -40,6 +40,10 @@ Route::livewire('/packages/settings', 'pages::packages.settings')
     ->middleware(['auth', 'permission:packages.manage'])
     ->name('packages.settings');
 
+Route::livewire('/packages/categories', 'pages::packages.categories')
+    ->middleware(['auth', 'permission:packages.manage'])
+    ->name('packages.categories');
+
 Route::livewire('/packages', 'pages::packages.index')
     ->middleware(['auth', 'permission:packages.manage'])
     ->name('packages');

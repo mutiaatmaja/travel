@@ -261,7 +261,7 @@
                     ===================================================== --}}
                     @if ($canPackages)
                         <div x-data="{
-                            open: {{ request()->routeIs(['packages.statistics', 'packages.settings', 'packages', 'packages.tracing'])
+                            open: {{ request()->routeIs(['packages.statistics', 'packages.settings', 'packages.categories', 'packages', 'packages.tracing'])
                                 ? 'true'
                                 : 'false' }}
                         }" :class="open ? 'menu-open' : 'menu-closed'">
@@ -292,6 +292,10 @@
                                 <a wire:navigate href="{{ route('packages') }}"
                                     class="submenu-item {{ request()->routeIs('packages') ? 'menu-active' : '' }}">
                                     Semua Paket
+                                </a>
+                                <a wire:navigate href="{{ route('packages.categories') }}"
+                                    class="submenu-item {{ request()->routeIs('packages.categories') ? 'menu-active' : '' }}">
+                                    Kategori Paket
                                 </a>
                                 <a wire:navigate href="{{ route('packages.tracing') }}"
                                     class="submenu-item {{ request()->routeIs('packages.tracing') ? 'menu-active' : '' }}">
