@@ -40,6 +40,7 @@ class User extends Authenticatable
             'booking' => ['booking.view'],
             'booking.trips' => ['trip.view'],
             'packages' => ['packages.manage'],
+            'expenses.categories' => ['expenses.manage'],
             'cities' => ['master-data.manage'],
             'route-fares' => ['route-fare.manage'],
             'booking.settings' => ['booking.settings.manage'],

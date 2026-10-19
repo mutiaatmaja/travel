@@ -6,6 +6,7 @@ use App\Models\Booking;
 use App\Models\City;
 use App\Models\Outlet;
 use App\Models\Package;
+use App\Models\PackageCategory;
 use App\Models\PackageSetting;
 use App\Models\Role;
 use App\Models\RouteFare;
@@ -15,6 +16,7 @@ use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\VehicleSeat;
 use Database\Seeders\DatabaseSeeder;
+use Database\Seeders\PackageCategorySeeder;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
@@ -40,6 +42,13 @@ class DemoSeederTest extends TestCase
         $this->assertDatabaseCount('bookings', 13);
         $this->assertDatabaseCount('packages', 8);
         $this->assertDatabaseCount('package_settings', 3);
+        $this->assertDatabaseCount('package_categories', 4);
+        $this->assertSame(['Ingoing', 'Ongoing'], PackageCategory::where('type', 'package')->orderBy('name')->pluck('name')->all());
+        $this->assertSame(['Cash', 'Kredit'], PackageCategory::where('type', 'financial')->orderBy('name')->pluck('name')->all());
+        $this->assertSame(2, Package::where('category', 'Ongoing')->where('financial_category', 'Cash')->count());
+        $this->assertSame(2, Package::where('category', 'Ongoing')->where('financial_category', 'Kredit')->count());
+        $this->assertSame(2, Package::where('category', 'Ingoing')->where('financial_category', 'Cash')->count());
+        $this->assertSame(2, Package::where('category', 'Ingoing')->where('financial_category', 'Kredit')->count());
         $this->assertDatabaseCount('trip_position_reports', 8);
         $this->assertSame(['cancelled', 'completed', 'confirmed', 'pending'], Booking::distinct()->orderBy('status')->pluck('status')->all());
         $this->assertSame(['cancelled', 'delivered', 'in_transit', 'pending', 'pickup'], Package::distinct()->orderBy('status')->pluck('status')->all());
@@ -52,6 +61,8 @@ class DemoSeederTest extends TestCase
             }
         }
         foreach (Package::all() as $package) {
+            $this->assertDatabaseHas('package_categories', ['type' => 'package', 'name' => $package->category]);
+            $this->assertDatabaseHas('package_categories', ['type' => 'financial', 'name' => $package->financial_category]);
             $this->assertSame($package->trackingEvents()->value('status'), $package->status);
             $this->assertGreaterThan(0, $package->calculateTotalCost());
         }
@@ -109,7 +120,7 @@ class DemoSeederTest extends TestCase
         $this->freezeTime();
         $this->seed(DatabaseSeeder::class);
         $counts = [];
-        foreach ([User::class, Role::class, City::class, Outlet::class, Vehicle::class, VehicleSeat::class, Trip::class, RouteFare::class, Booking::class, PackageSetting::class, Package::class, TripPositionReport::class] as $model) {
+        foreach ([User::class, Role::class, City::class, Outlet::class, Vehicle::class, VehicleSeat::class, Trip::class, RouteFare::class, Booking::class, PackageSetting::class, PackageCategory::class, Package::class, TripPositionReport::class] as $model) {
             $counts[$model] = $model::count();
         }
 
@@ -118,5 +129,18 @@ class DemoSeederTest extends TestCase
         foreach ($counts as $model => $count) {
             $this->assertSame($count, $model::count());
         }
+    }
+
+    public function test_category_seeder_restores_missing_defaults_without_removing_custom_categories(): void
+    {
+        PackageCategory::where('name', 'Ongoing')->where('type', 'package')->delete();
+        $customCategory = PackageCategory::factory()->create(['name' => 'Antar Cabang', 'type' => 'package']);
+
+        $this->seed(PackageCategorySeeder::class);
+        $this->seed(PackageCategorySeeder::class);
+
+        $this->assertDatabaseCount('package_categories', 5);
+        $this->assertDatabaseHas('package_categories', ['type' => 'package', 'name' => 'Ongoing']);
+        $this->assertModelExists($customCategory);
     }
 }

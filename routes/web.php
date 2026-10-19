@@ -12,6 +12,15 @@ Route::livewire('/login', 'pages::public.login')
 
 Route::post('/logout', LogoutController::class)->middleware('auth')->name('logout');
 
+Route::livewire('/expenses/categories', 'pages::expenses.categories')
+    ->middleware(['auth', 'permission:expenses.manage'])
+    ->name('expenses.categories');
+
+Route::livewire('/expenses/{service}', 'pages::expenses.index')
+    ->whereIn('service', ['travel', 'package'])
+    ->middleware(['auth', 'permission:expenses.manage'])
+    ->name('expenses.index');
+
 Route::livewire('/dashboard', 'pages::dashboard.index')
     ->middleware(['auth', 'permission:dashboard.view'])
     ->name('dashboard');

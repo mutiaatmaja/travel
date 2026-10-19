@@ -13,6 +13,7 @@ class PermissionSeeder extends Seeder
     public function run(): void
     {
         $permissions = [
+            'expenses.manage' => ['Kelola pengeluaran', 'Mengelola kategori dan pengeluaran Travel serta Paket.'],
             'dashboard.view' => ['Lihat dashboard', 'Melihat ringkasan dashboard operasional.'],
             'master-data.manage' => ['Kelola master data', 'Mengelola wilayah, outlet, armada, supir, rute, jadwal, dan tarif.'],
             'packages.manage' => ['Kelola paket', 'Mengelola data dan pengaturan paket.'],
@@ -53,6 +54,7 @@ class PermissionSeeder extends Seeder
         $grants = [
             'superadmin' => array_keys($permissions),
             'admin' => [
+                'expenses.manage',
                 'dashboard.view', 'master-data.manage', 'packages.manage',
                 'booking.view', 'booking.create', 'booking.confirm-payment', 'booking.cancel', 'booking.settings.manage',
                 'trip.view', 'trip.manage', 'route-fare.manage',

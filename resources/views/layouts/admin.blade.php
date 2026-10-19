@@ -83,6 +83,7 @@
         $canMasterData = $sidebarUser?->hasPermission('master-data.manage') ?? false;
         $canRouteFare = $sidebarUser?->hasPermission('route-fare.manage') ?? false;
         $canPackages = $sidebarUser?->hasPermission('packages.manage') ?? false;
+        $canExpenses = $sidebarUser?->hasPermission('expenses.manage') ?? false;
         $canBooking = $sidebarUser?->hasPermission('booking.view') ?? false;
         $canTrip = $sidebarUser?->hasPermission('trip.view') ?? false;
         $canBookingSettings = $sidebarUser?->hasPermission('booking.settings.manage') ?? false;
@@ -99,6 +100,7 @@
             $canBooking => route('booking'),
             $canTrip => route('booking.trips'),
             $canPackages => route('packages'),
+            $canExpenses => route('expenses.categories'),
             $canMasterData => route('cities'),
             $canUsers => route('users'),
             $canRolePermissions => route('roles-permissions'),
@@ -301,6 +303,29 @@
                                     class="submenu-item {{ request()->routeIs('packages.tracing') ? 'menu-active' : '' }}">
                                     Tracing
                                 </a>
+                            </div>
+                        </div>
+                    @endif
+
+                    {{-- =====================================================
+                        PENGELUARAN
+                    ===================================================== --}}
+                    @if ($canExpenses)
+                        <div x-data="{ open: {{ request()->routeIs('expenses.*') ? 'true' : 'false' }} }" :class="open ? 'menu-open' : 'menu-closed'">
+                            <button type="button" class="menu-parent" @click="open = !open" :aria-expanded="open">
+                                <div class="flex items-center gap-3">
+                                    <svg class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                        <rect x="3" y="5" width="18" height="14" rx="2" />
+                                        <path d="M3 9h18m-5 5h2" />
+                                    </svg>
+                                    <span x-show="!sidebar.desktopCollapsed" x-cloak>Pengeluaran</span>
+                                </div>
+                                <svg x-show="!sidebar.desktopCollapsed" class="h-4 w-4 transition-transform" :class="open ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+                            </button>
+                            <div class="submenu" x-show="!sidebar.desktopCollapsed" x-cloak>
+                                <a wire:navigate href="{{ route('expenses.categories') }}" class="submenu-item {{ request()->routeIs('expenses.categories') ? 'menu-active' : '' }}">Kategori Pengeluaran</a>
+                                <a wire:navigate href="{{ route('expenses.index', ['service' => 'travel']) }}" class="submenu-item {{ request()->routeIs('expenses.index') && request()->route('service') === 'travel' ? 'menu-active' : '' }}">Pengeluaran Travel</a>
+                                <a wire:navigate href="{{ route('expenses.index', ['service' => 'package']) }}" class="submenu-item {{ request()->routeIs('expenses.index') && request()->route('service') === 'package' ? 'menu-active' : '' }}">Pengeluaran Paket</a>
                             </div>
                         </div>
                     @endif

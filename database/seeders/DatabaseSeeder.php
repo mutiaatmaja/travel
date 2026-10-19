@@ -108,8 +108,10 @@ class DatabaseSeeder extends Seeder
         $this->call([
             MasterDataSeeder::class,
             PermissionSeeder::class,
+            ExpenseSeeder::class,
             BookingSeeder::class,
             PackageSettingSeeder::class,
+            PackageCategorySeeder::class,
             PackageSeeder::class,
         ]);
 
