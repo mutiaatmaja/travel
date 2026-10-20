@@ -263,7 +263,7 @@
                     ===================================================== --}}
                     @if ($canPackages)
                         <div x-data="{
-                            open: {{ request()->routeIs(['packages.statistics', 'packages.settings', 'packages.categories', 'packages', 'packages.tracing'])
+                            open: {{ request()->routeIs(['packages.statistics', 'packages.settings', 'packages.categories', 'packages', 'packages.tracing', 'packages.finance*'])
                                 ? 'true'
                                 : 'false' }}
                         }" :class="open ? 'menu-open' : 'menu-closed'">
@@ -287,6 +287,9 @@
                                     class="submenu-item {{ request()->routeIs('packages.statistics') ? 'menu-active' : '' }}">
                                     Statistik
                                 </a>
+                                @if ($canExpenses)
+                                    <a wire:navigate href="{{ route('packages.finance') }}" class="submenu-item {{ request()->routeIs('packages.finance*') ? 'menu-active' : '' }}">Keuangan</a>
+                                @endif
                                 <a wire:navigate href="{{ route('packages.settings') }}"
                                     class="submenu-item {{ request()->routeIs('packages.settings') ? 'menu-active' : '' }}">
                                     Pengaturan

@@ -45,6 +45,14 @@ Route::livewire('/packages/statistics', 'pages::packages.statistics')
     ->middleware(['auth', 'permission:packages.manage'])
     ->name('packages.statistics');
 
+Route::livewire('/packages/finance', 'pages::packages.finance')
+    ->middleware(['auth', 'permission:packages.manage', 'permission:expenses.manage'])
+    ->name('packages.finance');
+
+Route::livewire('/packages/finance/detail', 'pages::packages.finance-detail')
+    ->middleware(['auth', 'permission:packages.manage', 'permission:expenses.manage'])
+    ->name('packages.finance.detail');
+
 Route::livewire('/packages/settings', 'pages::packages.settings')
     ->middleware(['auth', 'permission:packages.manage'])
     ->name('packages.settings');

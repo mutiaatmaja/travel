@@ -48,6 +48,17 @@ new #[Layout('layouts::admin')] class extends Component
         abort_unless(array_key_exists($service, ExpenseCategory::SERVICES), 404);
         $this->service = $service;
         $this->title = 'Pengeluaran '.ExpenseCategory::SERVICES[$service];
+        $periodValidator = validator(request()->query(), [
+            'startDate' => ['sometimes', 'required', 'date_format:Y-m-d'],
+            'endDate' => ['sometimes', 'required', 'date_format:Y-m-d', Rule::when(request()->filled('startDate'), ['after_or_equal:startDate'])],
+        ]);
+        abort_if($periodValidator->fails(), 422);
+        $period = $periodValidator->validated();
+        if ($period !== []) {
+            $this->startDate = $period['startDate'] ?? '';
+            $this->endDate = $period['endDate'] ?? '';
+            $this->applyFilters();
+        }
     }
 
     public function openCreate(): void

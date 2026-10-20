@@ -2,9 +2,12 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
 class Package extends Model
@@ -75,5 +78,36 @@ class Package extends Model
         $calculated = (int) ceil($volumetricWeight * $ratePerKg);
 
         return max($calculated, (int) ($setting->minimum_charge ?? 0));
+    }
+
+    public static function financeQuery(string $startDate, string $endDate, bool $includeCancelled = false): Builder
+    {
+        return static::query()
+            ->where('created_at', '>=', $startDate)
+            ->where('created_at', '<', Carbon::parse($endDate)->addDay()->toDateString())
+            ->when(! $includeCancelled, fn (Builder $query): Builder => $query->where('status', '!=', 'cancelled'));
+    }
+
+    /**
+     * @return array{amount: int, count: int, groups: array<string, array<string, array{value: ?string, amount: int, count: int}>>}
+     */
+    public static function financeSummary(Builder $query): array
+    {
+        $summary = ['amount' => 0, 'count' => 0, 'groups' => ['category' => [], 'financial_category' => [], 'pricing_type' => [], 'status' => []]];
+        (clone $query)->reorder()->with('packageSetting')->chunkById(500, function (Collection $packages) use (&$summary): void {
+            foreach ($packages as $package) {
+                $amount = $package->calculateTotalCost();
+                $summary['amount'] += $amount;
+                $summary['count']++;
+                foreach (['category' => $package->category, 'financial_category' => $package->financial_category, 'pricing_type' => $package->packageSetting?->pricing_type, 'status' => $package->status] as $group => $value) {
+                    $key = json_encode($value);
+                    $summary['groups'][$group][$key] ??= ['value' => $value, 'amount' => 0, 'count' => 0];
+                    $summary['groups'][$group][$key]['amount'] += $amount;
+                    $summary['groups'][$group][$key]['count']++;
+                }
+            }
+        });
+
+        return $summary;
     }
 }
