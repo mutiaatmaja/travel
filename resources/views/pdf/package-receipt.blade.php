@@ -12,6 +12,12 @@
         .header { border: 1px solid #000; padding: 7px; page-break-inside: avoid; }
         .muted { font-size: 9px; }
         .code { font-size: 17px; font-weight: bold; margin: 4px 0; }
+        .header-code td { vertical-align: middle; }
+        .header-code .number-cell { width: 44%; }
+        .header-code .code { font-size: 13px; }
+        .barcode-cell { width: 56%; text-align: right; }
+        .barcode-space { padding: 2mm 3mm; background: #fff; }
+        .barcode { display: block; width: 64mm; height: 14mm; }
         .address { white-space: pre-line; word-wrap: break-word; }
         .status { padding: 5px 0; border-bottom: 1px solid #000; }
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
@@ -28,7 +34,16 @@
     <div class="header">
         <h1>{{ config('app.name') }}</h1>
         <p class="muted">RESI PENGIRIMAN PAKET · ANTAR ALAMAT</p>
-        <p class="code">{{ $package->code }}</p>
+        <table class="header-code" role="presentation">
+            <tr>
+                <td class="number-cell"><p class="code">{{ $package->code }}</p></td>
+                <td class="barcode-cell">
+                    <div class="barcode-space">
+                        <img class="barcode" src="{{ $barcodeDataUri }}" alt="Barcode {{ $package->code }}">
+                    </div>
+                </td>
+            </tr>
+        </table>
         <p class="muted">Tanggal dibuat: {{ $package->created_at?->format('d M Y, H:i') ?? 'Belum tersedia' }}</p>
     </div>
     <div class="status">Status Paket: <strong>{{ $statuses[$package->status] ?? $package->status }}</strong></div>

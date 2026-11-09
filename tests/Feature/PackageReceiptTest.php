@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Http\Controllers\PackageReceiptController;
 use App\Models\Permission;
 use App\Models\User;
 use Database\Factories\PackageFactory;
@@ -78,6 +79,30 @@ class PackageReceiptTest extends TestCase
         Pdf::assertRespondedWithPdf(fn (PdfBuilder $pdf): bool => $pdf->format === 'a5' && $pdf->downloadName === 'Resi-'.$package->code.'.pdf' && ! $pdf->isDownload());
     }
 
+    #[TestWith(['PKG-DEMO-003'])]
+    #[TestWith(['PKG-20261109-A1B2C3'])]
+    public function test_receipt_embeds_a_barcode_for_the_requested_package_number(string $code): void
+    {
+        $this->signIn();
+        Pdf::fake();
+        $package = PackageFactory::new()->create(['code' => $code]);
+
+        $this->get(route('packages.receipt', $package))->assertOk();
+
+        Pdf::assertRespondedWithPdf(function (PdfBuilder $pdf) use ($code): bool {
+            $html = $pdf->getHtml();
+            $this->assertStringContainsString('alt="Barcode '.$code.'"', $html);
+            $this->assertSame(1, preg_match('/src="data:image\/svg\+xml;base64,([A-Za-z0-9+\/=]+)"/', $html, $matches));
+            $svg = base64_decode($matches[1], true);
+            $this->assertNotFalse($svg);
+            $this->assertStringContainsString('<desc>'.$code.'</desc>', $svg);
+            $this->assertStringContainsString('<rect ', $svg);
+            $this->assertStringNotContainsString('https://', $html);
+
+            return true;
+        });
+    }
+
     #[TestWith(['pending', 'Pending'])]
     #[TestWith(['pickup', 'Pickup'])]
     #[TestWith(['delivered', 'Terkirim'])]
@@ -121,7 +146,7 @@ class PackageReceiptTest extends TestCase
         $package = PackageFactory::new()->create(['sender_address' => '<script>alert(1)</script>']);
         $package->load('packageSetting');
 
-        $html = view('pdf.package-receipt', ['package' => $package])->render();
+        $html = (new PackageReceiptController)($package)->getHtml();
 
         $this->assertStringNotContainsString('<script>alert(1)</script>', $html);
         $this->assertStringContainsString('&lt;script&gt;alert(1)&lt;/script&gt;', $html);
