@@ -12,8 +12,9 @@
         .header { border: 1px solid #000; padding: 7px; page-break-inside: avoid; }
         .muted { font-size: 9px; }
         .code { font-size: 17px; font-weight: bold; margin: 4px 0; }
-        .header-code td { vertical-align: middle; }
+        .header-code td { vertical-align: middle; padding: 0; }
         .header-code .number-cell { width: 44%; }
+        .header-code .number-cell p { margin: 2px 0; line-height: 1.2; }
         .header-code .code { font-size: 13px; }
         .barcode-cell { width: 56%; text-align: right; }
         .barcode-space { padding: 2mm 3mm; background: #fff; }
@@ -32,11 +33,14 @@
         $statuses = ['pending' => 'Pending', 'pickup' => 'Pickup', 'in_transit' => 'Dalam Perjalanan', 'delivered' => 'Terkirim', 'cancelled' => 'Dibatalkan'];
     @endphp
     <div class="header">
-        <h1>{{ config('app.name') }}</h1>
-        <p class="muted">RESI PENGIRIMAN PAKET · ANTAR ALAMAT</p>
         <table class="header-code" role="presentation">
             <tr>
-                <td class="number-cell"><p class="code">{{ $package->code }}</p></td>
+                <td class="number-cell">
+                    <h1>{{ config('app.name') }}</h1>
+                    <p class="muted">RESI PENGIRIMAN PAKET · ANTAR ALAMAT</p>
+                    <p class="code">{{ $package->code }}</p>
+                    <p class="muted">Tanggal dibuat: {{ $package->created_at?->format('d M Y, H:i') ?? 'Belum tersedia' }}</p>
+                </td>
                 <td class="barcode-cell">
                     <div class="barcode-space">
                         <img class="barcode" src="{{ $barcodeDataUri }}" alt="Barcode {{ $package->code }}">
@@ -44,7 +48,6 @@
                 </td>
             </tr>
         </table>
-        <p class="muted">Tanggal dibuat: {{ $package->created_at?->format('d M Y, H:i') ?? 'Belum tersedia' }}</p>
     </div>
     <div class="status">Status Paket: <strong>{{ $statuses[$package->status] ?? $package->status }}</strong></div>
     <h2>PENGIRIM / ALAMAT ASAL</h2>
