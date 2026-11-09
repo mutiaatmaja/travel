@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\BookingTicketController;
 use App\Http\Controllers\LogoutController;
+use App\Http\Controllers\PackageReceiptController;
 use Illuminate\Support\Facades\Route;
 
 Route::livewire('/', 'pages::public.home')->name('home');
@@ -64,6 +65,10 @@ Route::livewire('/packages/categories', 'pages::packages.categories')
 Route::livewire('/packages', 'pages::packages.index')
     ->middleware(['auth', 'permission:packages.manage'])
     ->name('packages');
+
+Route::get('/packages/{package}/receipt.pdf', PackageReceiptController::class)
+    ->middleware(['auth', 'permission:packages.manage'])
+    ->name('packages.receipt');
 
 Route::livewire('/packages/tracing', 'pages::packages.tracing')
     ->middleware(['auth', 'permission:packages.manage'])

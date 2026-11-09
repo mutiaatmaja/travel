@@ -94,7 +94,7 @@ new #[Layout('layouts::admin')] class extends Component
     {
         $packages = Package::query()
             ->with('packageSetting')
-            ->when($this->search !== '', fn ($query) => $query->where('code', 'like', '%'.$this->search.'%')->orWhere('customer_name', 'like', '%'.$this->search.'%'))
+            ->when($this->search !== '', fn ($query) => $query->where(fn ($names) => $names->where('code', 'like', '%'.$this->search.'%')->orWhere('customer_name', 'like', '%'.$this->search.'%')->orWhere('sender_name', 'like', '%'.$this->search.'%')->orWhere('recipient_name', 'like', '%'.$this->search.'%')))
             ->latest()
             ->limit(20)
             ->get();
@@ -152,7 +152,7 @@ new #[Layout('layouts::admin')] class extends Component
                                 <span
                                     class="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-600">{{ ucfirst(str_replace('_', ' ', $package->status)) }}</span>
                             </div>
-                            <p class="mt-1 text-sm text-slate-500">{{ $package->customer_name }}</p>
+                            <p class="mt-1 text-sm text-slate-500">{{ $package->sender_name ?? $package->customer_name }} → {{ $package->recipient_name ?? "Penerima belum dilengkapi" }}</p>
                         </button>
                     @empty
                         <p class="p-6 text-center text-sm text-slate-500">Paket tidak ditemukan.</p>
@@ -168,7 +168,7 @@ new #[Layout('layouts::admin')] class extends Component
                         <div>
                             <p class="text-xs font-bold uppercase tracking-widest text-brand-600">Detail Paket</p>
                             <h3 class="mt-1 text-xl font-extrabold text-slate-900">{{ $selectedPackage->code }}</h3>
-                            <p class="mt-1 text-sm text-slate-500">{{ $selectedPackage->customer_name }} ·
+                            <p class="mt-1 text-sm text-slate-500">{{ $selectedPackage->sender_name ?? $selectedPackage->customer_name }} → {{ $selectedPackage->recipient_name ?? "Penerima belum dilengkapi" }} ·
                                 {{ $selectedPackage->weight_kg }} kg</p>
                         </div>
                         <p class="text-lg font-extrabold text-brand-700">

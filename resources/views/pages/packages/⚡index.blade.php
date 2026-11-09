@@ -5,6 +5,7 @@ use App\Models\PackageSetting;
 use App\Models\PackageCategory;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -21,15 +22,27 @@ new #[Layout('layouts::admin')] class extends Component {
 
     public bool $confirmDeleteOpen = false;
 
+    #[Locked]
     public ?int $editingId = null;
 
     public ?int $deleteId = null;
 
     public ?int $packageSettingId = null;
 
-    public string $code = '';
+    #[Locked]
+    public string $legacyCustomerName = '';
 
-    public string $customerName = '';
+    public string $senderName = '';
+
+    public string $senderPhone = '';
+
+    public string $senderAddress = '';
+
+    public string $recipientName = '';
+
+    public string $recipientPhone = '';
+
+    public string $recipientAddress = '';
 
     public string $category = '';
 
@@ -54,18 +67,25 @@ new #[Layout('layouts::admin')] class extends Component {
 
     public function openCreate(): void
     {
+        abort_unless(auth()->user()?->hasPermission('packages.manage'), 403);
         $this->resetForm();
         $this->modalOpen = true;
     }
 
     public function openEdit(int $id): void
     {
+        abort_unless(auth()->user()?->hasPermission('packages.manage'), 403);
         $package = Package::findOrFail($id);
 
         $this->editingId = $id;
         $this->packageSettingId = $package->package_setting_id;
-        $this->code = $package->code;
-        $this->customerName = $package->customer_name;
+        $this->legacyCustomerName = $package->customer_name;
+        $this->senderName = $package->sender_name ?? '';
+        $this->senderPhone = $package->sender_phone ?? '';
+        $this->senderAddress = $package->sender_address ?? '';
+        $this->recipientName = $package->recipient_name ?? '';
+        $this->recipientPhone = $package->recipient_phone ?? '';
+        $this->recipientAddress = $package->recipient_address ?? '';
         $this->category = $package->category ?? '';
         $this->financialCategory = $package->financial_category ?? '';
         $this->weightKg = (float) $package->weight_kg;
@@ -81,9 +101,21 @@ new #[Layout('layouts::admin')] class extends Component {
 
     public function save(): void
     {
+        abort_unless(auth()->user()?->hasPermission('packages.manage'), 403);
+        $this->senderName = trim($this->senderName);
+        $this->senderPhone = trim($this->senderPhone);
+        $this->senderAddress = trim($this->senderAddress);
+        $this->recipientName = trim($this->recipientName);
+        $this->recipientPhone = trim($this->recipientPhone);
+        $this->recipientAddress = trim($this->recipientAddress);
         $this->validate([
             'packageSettingId' => ['required', 'exists:package_settings,id'],
-            'customerName' => ['required', 'max:255'],
+            'senderName' => ['required', 'string', 'max:255'],
+            'senderPhone' => ['required', 'string', 'max:30', 'regex:/^\+?[0-9][0-9 ()-]{6,28}[0-9]$/'],
+            'senderAddress' => ['required', 'string', 'max:2000'],
+            'recipientName' => ['required', 'string', 'max:255'],
+            'recipientPhone' => ['required', 'string', 'max:30', 'regex:/^\+?[0-9][0-9 ()-]{6,28}[0-9]$/'],
+            'recipientAddress' => ['required', 'string', 'max:2000'],
             'category' => ['required', Rule::exists('package_categories', 'name')->where('type', 'package')],
             'financialCategory' => ['required', Rule::exists('package_categories', 'name')->where('type', 'financial')],
             'weightKg' => ['required', 'numeric', 'min:0'],
@@ -94,13 +126,19 @@ new #[Layout('layouts::admin')] class extends Component {
             'description' => ['nullable', 'string'],
         ]);
 
-        $package = Package::updateOrCreate(
-            [
-                'id' => $this->editingId,
-            ],
+        $package = $this->editingId ? Package::findOrFail($this->editingId) : new Package;
+        if (! $package->exists) {
+            $package->customer_name = $this->senderName;
+        }
+        $package->fill(
             [
                 'package_setting_id' => $this->packageSettingId,
-                'customer_name' => $this->customerName,
+                'sender_name' => $this->senderName,
+                'sender_phone' => $this->senderPhone,
+                'sender_address' => $this->senderAddress,
+                'recipient_name' => $this->recipientName,
+                'recipient_phone' => $this->recipientPhone,
+                'recipient_address' => $this->recipientAddress,
                 'category' => $this->category,
                 'financial_category' => $this->financialCategory,
                 'weight_kg' => $this->weightKg,
@@ -111,8 +149,9 @@ new #[Layout('layouts::admin')] class extends Component {
                 'description' => $this->description,
             ],
         );
+        $package->save();
 
-        $message = $this->editingId ? 'Paket berhasil diperbarui.' : 'Paket berhasil ditambahkan.';
+        $message = $this->editingId ? 'Paket '.$package->code.' berhasil diperbarui.' : 'Paket '.$package->code.' berhasil ditambahkan.';
         $this->modalOpen = false;
         $this->resetForm();
         session()->flash('toast', ['type' => 'success', 'message' => $message]);
@@ -142,7 +181,7 @@ new #[Layout('layouts::admin')] class extends Component {
 
     private function resetForm(): void
     {
-        $this->reset(['modalOpen', 'editingId', 'deleteId', 'packageSettingId', 'code', 'customerName', 'weightKg', 'lengthCm', 'widthCm', 'heightCm', 'status', 'description']);
+        $this->reset(['modalOpen', 'editingId', 'deleteId', 'packageSettingId', 'legacyCustomerName', 'senderName', 'senderPhone', 'senderAddress', 'recipientName', 'recipientPhone', 'recipientAddress', 'weightKg', 'lengthCm', 'widthCm', 'heightCm', 'status', 'description']);
         $this->weightKg = 0;
         $this->lengthCm = 0;
         $this->widthCm = 0;
@@ -158,7 +197,7 @@ new #[Layout('layouts::admin')] class extends Component {
     {
         return view('pages.packages.⚡index', [
             'packages' => Package::with('packageSetting')
-                ->when($this->search !== '', fn($query) => $query->where('code', 'like', '%' . $this->search . '%')->orWhere('customer_name', 'like', '%' . $this->search . '%'))
+                ->when($this->search !== '', fn ($query) => $query->where(fn ($names) => $names->where('code', 'like', '%'.$this->search.'%')->orWhere('customer_name', 'like', '%'.$this->search.'%')->orWhere('sender_name', 'like', '%'.$this->search.'%')->orWhere('recipient_name', 'like', '%'.$this->search.'%')))
                 ->latest()
                 ->paginate(10),
             'packageSettings' => PackageSetting::where('is_active', true)->orderBy('name')->get(),
@@ -179,7 +218,7 @@ new #[Layout('layouts::admin')] class extends Component {
         <div class="flex flex-col gap-4 border-b border-slate-100 p-4 sm:flex-row sm:items-center sm:justify-between">
             <h3 class="font-extrabold">Daftar Paket</h3>
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
-                <input wire:model.live.debounce.300ms="search" placeholder="Cari kode atau pelanggan..."
+                <input wire:model.live.debounce.300ms="search" placeholder="Cari nomor, pengirim, atau penerima..."
                     class="w-full rounded-xl border px-4 py-2.5 text-sm sm:max-w-xs">
                 <button type="button" wire:click="openCreate" wire:loading.attr="disabled"
                     class="rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-bold text-white">
@@ -189,55 +228,80 @@ new #[Layout('layouts::admin')] class extends Component {
             </div>
         </div>
 
-        <div class="relative overflow-x-auto">
-            <div wire:loading wire:target="search,save,openEdit,confirmDelete,delete"
-                class="absolute inset-0 z-10 flex items-center justify-center bg-white/70">
+        <div class="relative">
+            <div wire:loading.flex wire:target="search,save,delete" class="absolute inset-0 z-10 items-center justify-center bg-white/80" role="status">
                 <span class="rounded-xl bg-white px-4 py-3 text-sm font-semibold shadow-lg">Memuat data...</span>
             </div>
-
-            <table class="w-full min-w-[1100px] text-left text-sm">
-                <thead class="bg-slate-50 text-xs uppercase text-slate-500">
+            <table class="block w-full text-left text-sm lg:table lg:table-fixed">
+                <thead class="hidden bg-slate-50 text-xs uppercase text-slate-500 lg:table-header-group">
                     <tr>
-                        <th class="px-6 py-4">Kode</th>
-                        <th class="px-6 py-4">Pelanggan</th>
-                        <th class="px-6 py-4">Kategori Paket</th>
-                        <th class="px-6 py-4">Kategori Keuangan</th>
-                        <th class="px-6 py-4">Tarif</th>
-                        <th class="px-6 py-4">Berat</th>
-                        <th class="px-6 py-4">Dimensi</th>
-                        <th class="px-6 py-4">Status</th>
-                        <th class="px-6 py-4">Biaya</th>
-                        <th class="px-6 py-4 text-right">Aksi</th>
+                        <th class="w-[22%] px-4 py-3">Paket</th>
+                        <th class="w-[27%] px-4 py-3">Pengiriman</th>
+                        <th class="w-[16%] px-4 py-3">Kategori</th>
+                        <th class="w-[18%] px-4 py-3">Ongkos</th>
+                        <th class="w-[17%] px-4 py-3">Aksi</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100">
+                <tbody class="block divide-y divide-slate-100 lg:table-row-group">
                     @forelse ($packages as $package)
-                        <tr>
-                            <td class="px-6 py-4 font-bold">{{ $package->code }}</td>
-                            <td class="px-6 py-4">{{ $package->customer_name }}</td>
-                            <td class="px-6 py-4">{{ $package->category ?? 'Belum dikategorikan' }}</td>
-                            <td class="px-6 py-4">{{ $package->financial_category ?? 'Belum dikategorikan' }}</td>
-                            <td class="px-6 py-4">{{ $package->packageSetting?->name ?? '-' }}</td>
-                            <td class="px-6 py-4">{{ $package->weight_kg }} kg</td>
-                            <td class="px-6 py-4">
-                                {{ $package->length_cm }}×{{ $package->width_cm }}×{{ $package->height_cm }} cm</td>
-                            <td class="px-6 py-4">
-                                <span
-                                    class="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-bold text-brand-700">{{ ucfirst(str_replace('_', ' ', $package->status)) }}</span>
+                        @php
+                            $statusLabels = ['pending' => 'Pending', 'pickup' => 'Pickup', 'in_transit' => 'Dalam Perjalanan', 'delivered' => 'Terkirim', 'cancelled' => 'Dibatalkan'];
+                            $statusClass = match ($package->status) {
+                                'delivered' => 'bg-green-50 text-green-700',
+                                'cancelled' => 'bg-red-50 text-red-700',
+                                default => 'bg-brand-50 text-brand-700',
+                            };
+                        @endphp
+                        <tr wire:key="package-list-{{ $package->id }}" class="grid grid-cols-2 gap-3 p-4 lg:table-row lg:p-0">
+                            <td class="col-span-2 min-w-0 lg:px-4 lg:py-4 lg:align-top">
+                                <div class="flex flex-wrap items-center gap-2 lg:block">
+                                    <p class="break-words font-extrabold text-slate-900">{{ $package->code }}</p>
+                                    <span class="inline-block rounded-full px-2 py-1 text-[11px] font-bold lg:mt-2 {{ $statusClass }}">{{ $statusLabels[$package->status] ?? $package->status }}</span>
+                                </div>
+                                <p class="mt-1 text-xs text-slate-500">{{ $package->created_at?->format('d M Y, H:i') }}</p>
                             </td>
-                            <td class="px-6 py-4 font-bold text-brand-700">
-                                Rp{{ number_format($package->calculateTotalCost(), 0, ',', '.') }}</td>
-                            <td class="px-6 py-4 text-right">
-                                <button wire:click="openEdit({{ $package->id }})"
-                                    class="px-2 text-xs font-bold text-brand-600">Edit</button>
-                                <button wire:click="confirmDelete({{ $package->id }})"
-                                    class="px-2 text-xs font-bold text-red-600">Hapus</button>
+                            <td class="col-span-2 min-w-0 lg:px-4 lg:py-4 lg:align-top">
+                                <p class="text-xs text-slate-500">Pengirim → Penerima</p>
+                                <p class="mt-1 break-words font-semibold">{{ $package->sender_name ?? 'Belum dilengkapi' }} → {{ $package->recipient_name ?? 'Belum dilengkapi' }}</p>
+                                <details wire:key="package-details-{{ $package->id }}" class="mt-2">
+                                    <summary class="cursor-pointer rounded text-xs font-bold text-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500">Detail Paket</summary>
+                                    <dl class="mt-3 space-y-3 rounded-xl bg-slate-50 p-3 text-xs">
+                                        <div><dt class="font-bold text-slate-700">No. HP Pengirim</dt><dd class="mt-1 text-slate-600">{{ $package->sender_phone ?? 'Belum dilengkapi' }}</dd></div>
+                                        <div><dt class="font-bold text-slate-700">Alamat Asal</dt><dd class="mt-1 whitespace-pre-line break-words text-slate-600">{{ $package->sender_address ?? 'Alamat belum dilengkapi' }}</dd></div>
+                                        <div><dt class="font-bold text-slate-700">No. HP Penerima</dt><dd class="mt-1 text-slate-600">{{ $package->recipient_phone ?? 'Belum dilengkapi' }}</dd></div>
+                                        <div><dt class="font-bold text-slate-700">Alamat Tujuan</dt><dd class="mt-1 whitespace-pre-line break-words text-slate-600">{{ $package->recipient_address ?? 'Alamat belum dilengkapi' }}</dd></div>
+                                        <div><dt class="font-bold text-slate-700">Berat / Dimensi</dt><dd class="mt-1 text-slate-600">{{ $package->weight_kg }} kg · {{ $package->length_cm }} × {{ $package->width_cm }} × {{ $package->height_cm }} cm</dd></div>
+                                        <div><dt class="font-bold text-slate-700">Deskripsi</dt><dd class="mt-1 whitespace-pre-line break-words text-slate-600">{{ $package->description ?: 'Tidak ada keterangan tambahan.' }}</dd></div>
+                                        @if (! $package->sender_name)
+                                            <div><dt class="font-bold text-amber-700">Pelanggan lama</dt><dd class="mt-1 break-words text-amber-700">{{ $package->customer_name }}</dd></div>
+                                        @endif
+                                    </dl>
+                                </details>
+                            </td>
+                            <td class="min-w-0 lg:px-4 lg:py-4 lg:align-top">
+                                <p class="text-xs text-slate-500 lg:hidden">Kategori</p>
+                                <p class="break-words font-semibold">{{ $package->category ?? 'Belum dikategorikan' }}</p>
+                                <p class="mt-1 break-words text-xs text-slate-500">{{ $package->financial_category ?? 'Belum dikategorikan' }}</p>
+                            </td>
+                            <td class="min-w-0 lg:px-4 lg:py-4 lg:align-top">
+                                <p class="text-xs text-slate-500 lg:hidden">Ongkos</p>
+                                <p class="break-words font-extrabold text-brand-700">Rp{{ number_format($package->calculateTotalCost(), 0, ',', '.') }}</p>
+                                <p class="mt-1 break-words text-xs text-slate-500">{{ $package->packageSetting?->name ?? 'Tarif tidak tersedia' }}</p>
+                            </td>
+                            <td class="col-span-2 border-t border-slate-100 pt-3 lg:border-0 lg:px-4 lg:py-4 lg:align-top">
+                                <div class="flex flex-wrap items-center gap-3 text-xs font-bold">
+                                    <a href="{{ route('packages.receipt', $package) }}" target="_blank" rel="noopener noreferrer" aria-label="Print resi {{ $package->code }} (PDF, tab baru)" class="rounded text-brand-700 underline-offset-2 hover:underline focus:outline-none focus:ring-2 focus:ring-brand-500">Print</a>
+                                    <button type="button" wire:click="openEdit({{ $package->id }})" wire:loading.attr="disabled" wire:target="openEdit({{ $package->id }})" class="rounded text-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:cursor-wait disabled:opacity-60">
+                                        <span wire:loading.remove wire:target="openEdit({{ $package->id }})">Edit</span><span wire:loading wire:target="openEdit({{ $package->id }})" role="status">Membuka...</span>
+                                    </button>
+                                    <button type="button" wire:click="confirmDelete({{ $package->id }})" wire:loading.attr="disabled" wire:target="confirmDelete({{ $package->id }})" class="rounded text-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:cursor-wait disabled:opacity-60">
+                                        <span wire:loading.remove wire:target="confirmDelete({{ $package->id }})">Hapus</span><span wire:loading wire:target="confirmDelete({{ $package->id }})" role="status">Membuka...</span>
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     @empty
-                        <tr>
-                            <td colspan="10" class="px-6 py-12 text-center text-slate-500">Belum ada paket.</td>
-                        </tr>
+                        <tr class="block lg:table-row"><td colspan="5" class="block px-4 py-10 text-center text-slate-500 lg:table-cell">Belum ada paket sesuai pencarian.</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -261,27 +325,59 @@ new #[Layout('layouts::admin')] class extends Component {
                     <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-slate-50 p-5 sm:p-6">
                         <div class="grid grid-cols-1 items-start gap-5 lg:grid-cols-3">
                             <div class="space-y-5 lg:col-span-2">
+                                @if ($editingId && (!$senderName || !$recipientName))
+                                    <p class="rounded-xl bg-amber-50 p-4 text-sm text-amber-900">Data pelanggan lama: <strong>{{ $legacyCustomerName }}</strong>. Lengkapi identitas pengirim dan penerima berdasarkan informasi yang benar.</p>
+                                @endif
+                                <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+                                    <section class="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
+                                        <h3 class="font-bold text-slate-900">Pengirim</h3>
+                                        <div class="mt-4">
+                                            <label for="package-sender-name" class="mb-1 block text-sm font-semibold">Nama Pengirim</label>
+                                            <input id="package-sender-name" wire:model="senderName" maxlength="255" autocomplete="off" placeholder="Nama lengkap Pengirim"
+                                                class="w-full rounded-lg border px-3 py-2.5 text-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-100">
+                                            @error('senderName') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                        </div>
+                                                                                <div class="mt-4">
+                                            <label for="package-sender-phone" class="mb-1 block text-sm font-semibold">No. HP Pengirim</label>
+                                            <input id="package-sender-phone" wire:model="senderPhone" type="tel" inputmode="tel" maxlength="30" autocomplete="off" placeholder="0812... atau +62812..."
+                                                class="w-full rounded-lg border px-3 py-2.5 text-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-100">
+                                            @error('senderPhone') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                        </div>
+<div class="mt-4">
+                                            <label for="package-sender-address" class="mb-1 block text-sm font-semibold">Alamat Asal</label>
+                                            <textarea id="package-sender-address" wire:model="senderAddress" rows="4" maxlength="2000" placeholder="Jalan, nomor rumah, kelurahan/desa, kecamatan, kota/kabupaten, provinsi, dan kode pos"
+                                                class="w-full rounded-lg border px-3 py-2.5 text-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-100"></textarea>
+                                            @error('senderAddress') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                        </div>
+                                    </section>
+                                    <section class="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
+                                        <h3 class="font-bold text-slate-900">Penerima</h3>
+                                        <div class="mt-4">
+                                            <label for="package-recipient-name" class="mb-1 block text-sm font-semibold">Nama Penerima</label>
+                                            <input id="package-recipient-name" wire:model="recipientName" maxlength="255" autocomplete="off" placeholder="Nama lengkap Penerima"
+                                                class="w-full rounded-lg border px-3 py-2.5 text-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-100">
+                                            @error('recipientName') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                        </div>
+                                                                                <div class="mt-4">
+                                            <label for="package-recipient-phone" class="mb-1 block text-sm font-semibold">No. HP Penerima</label>
+                                            <input id="package-recipient-phone" wire:model="recipientPhone" type="tel" inputmode="tel" maxlength="30" autocomplete="off" placeholder="0812... atau +62812..."
+                                                class="w-full rounded-lg border px-3 py-2.5 text-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-100">
+                                            @error('recipientPhone') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                        </div>
+<div class="mt-4">
+                                            <label for="package-recipient-address" class="mb-1 block text-sm font-semibold">Alamat Tujuan</label>
+                                            <textarea id="package-recipient-address" wire:model="recipientAddress" rows="4" maxlength="2000" placeholder="Jalan, nomor rumah, kelurahan/desa, kecamatan, kota/kabupaten, provinsi, dan kode pos"
+                                                class="w-full rounded-lg border px-3 py-2.5 text-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-100"></textarea>
+                                            @error('recipientAddress') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                        </div>
+                                    </section>
+                                </div>
                                 <section class="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
                                     <h3 class="font-bold text-slate-900">Informasi Paket</h3>
-                                    <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                                        <div>
-                                            <label for="package-code" class="mb-1 block text-sm font-semibold">Nomor paket</label>
-                                            <input id="package-code" wire:model="code" readonly placeholder="Dibuat otomatis saat disimpan"
-                                                class="w-full rounded-lg border bg-slate-50 px-3 py-2.5 text-sm text-slate-500">
-                                        </div>
-                                        <div>
-                                            <label for="package-customer" class="mb-1 block text-sm font-semibold">Nama pelanggan</label>
-                                            <input id="package-customer" wire:model="customerName" placeholder="Nama penerima atau pengirim"
-                                                class="w-full rounded-lg border px-3 py-2.5 text-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-100">
-                                            @error('customerName') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-                                        </div>
-                                        <div class="sm:col-span-2">
-                                            <label for="package-description" class="mb-1 block text-sm font-semibold">Deskripsi paket <span class="font-normal text-slate-400">(opsional)</span></label>
-                                            <textarea id="package-description" wire:model="description" rows="2" placeholder="Isi paket atau keterangan penanganan"
-                                                class="w-full rounded-lg border px-3 py-2.5 text-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-100"></textarea>
-                                            @error('description') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-                                        </div>
-                                    </div>
+                                    <p class="mt-1 text-xs text-slate-500">Nomor paket dibuat otomatis saat paket baru disimpan.</p>
+                                    <label for="package-description" class="mb-1 mt-4 block text-sm font-semibold">Deskripsi paket <span class="font-normal text-slate-400">(opsional)</span></label>
+                                    <textarea id="package-description" wire:model="description" rows="2" placeholder="Isi paket atau keterangan penanganan" class="w-full rounded-lg border px-3 py-2.5 text-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-100"></textarea>
+                                    @error('description') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                 </section>
                                 <section class="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
                                     <h3 class="font-bold text-slate-900">Kategori & Status</h3>

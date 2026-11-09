@@ -60,7 +60,7 @@ new class extends Component {
         $this->trackedPackageId = $package->id;
         $this->trackingResult = [
             'code' => $package->code,
-            'customer' => $package->customer_name,
+            'customer' => $package->sender_name ?? $package->customer_name,
             'status' => $package->status,
             'events' => $package->trackingEvents
                 ->map(

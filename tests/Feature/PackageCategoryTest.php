@@ -45,7 +45,7 @@ class PackageCategoryTest extends TestCase
         $setting = PackageSetting::create(['name' => 'Reguler', 'pricing_type' => 'weight', 'rate_per_kg' => 15000]);
 
         $form = Livewire::test('pages::packages.index')->call('openCreate')
-            ->set('packageSettingId', $setting->id)->set('customerName', 'Pelanggan')
+            ->set('packageSettingId', $setting->id)->set('senderPhone', '081234567890')->set('recipientPhone', '+6281398765432')->set('senderName', 'Pengirim')->set('senderAddress', 'Alamat Pengirim')->set('recipientName', 'Penerima')->set('recipientAddress', 'Alamat Penerima')
             ->set('category', $category)->set('financialCategory', $financialCategory)
             ->call('save')->assertHasNoErrors()->assertSet('category', '')->assertSet('financialCategory', '');
 
@@ -63,7 +63,7 @@ class PackageCategoryTest extends TestCase
         $this->signInWithPackagePermission();
         $setting = PackageSetting::create(['name' => 'Reguler', 'pricing_type' => 'weight']);
 
-        Livewire::test('pages::packages.index')->set('packageSettingId', $setting->id)->set('customerName', 'Pelanggan')
+        Livewire::test('pages::packages.index')->set('packageSettingId', $setting->id)->set('senderPhone', '081234567890')->set('recipientPhone', '+6281398765432')->set('senderName', 'Pengirim')->set('senderAddress', 'Alamat Pengirim')->set('recipientName', 'Penerima')->set('recipientAddress', 'Alamat Penerima')
             ->set('category', $category)->set('financialCategory', $financialCategory)->call('save')
             ->assertHasErrors(['category' => $rule, 'financialCategory' => $rule]);
 
@@ -78,7 +78,7 @@ class PackageCategoryTest extends TestCase
 
         Livewire::test('pages::packages.index')->assertSee('Belum dikategorikan')
             ->call('openEdit', $package->id)->assertSet('category', '')->assertSet('financialCategory', '')
-            ->set('category', 'Ongoing')->set('financialCategory', 'Kredit')->call('save')->assertHasNoErrors();
+            ->set('category', 'Ongoing')->set('financialCategory', 'Kredit')->set('senderPhone', '081234567890')->set('recipientPhone', '+6281398765432')->set('senderName', 'Pengirim')->set('senderAddress', 'Alamat Pengirim')->set('recipientName', 'Penerima')->set('recipientAddress', 'Alamat Penerima')->call('save')->assertHasNoErrors();
 
         $this->assertDatabaseHas('packages', ['id' => $package->id, 'category' => 'Ongoing', 'financial_category' => 'Kredit']);
     }

@@ -61,6 +61,12 @@ class DemoSeederTest extends TestCase
             }
         }
         foreach (Package::all() as $package) {
+            $this->assertNotEmpty($package->sender_name);
+            $this->assertNotEmpty($package->sender_phone);
+            $this->assertNotEmpty($package->recipient_phone);
+            $this->assertNotEmpty($package->sender_address);
+            $this->assertNotEmpty($package->recipient_name);
+            $this->assertNotEmpty($package->recipient_address);
             $this->assertDatabaseHas('package_categories', ['type' => 'package', 'name' => $package->category]);
             $this->assertDatabaseHas('package_categories', ['type' => 'financial', 'name' => $package->financial_category]);
             $this->assertSame($package->trackingEvents()->value('status'), $package->status);

@@ -24,6 +24,12 @@ class PackageSeeder extends Seeder
             $package = Package::updateOrCreate(['code' => 'PKG-DEMO-'.str_pad((string) ($index + 1), 3, '0', STR_PAD_LEFT)], [
                 'package_setting_id' => PackageSetting::where('name', $data['setting'])->firstOrFail()->id,
                 'customer_name' => $data['name'], 'weight_kg' => $data['weight'],
+                'sender_name' => $data['name'],
+                'sender_phone' => '08120000'.str_pad((string) ($index + 1), 4, '0', STR_PAD_LEFT),
+                'sender_address' => 'Jl. Contoh Pengirim No. '.($index + 1).', Pontianak (data demo)',
+                'recipient_name' => 'Penerima Demo '.($index + 1),
+                'recipient_phone' => '08130000'.str_pad((string) ($index + 1), 4, '0', STR_PAD_LEFT),
+                'recipient_address' => 'Jl. Contoh Penerima No. '.($index + 1).', Sintang (data demo)',
                 'category' => $data['category'],
                 'financial_category' => $data['financial_category'],
                 'length_cm' => $data['dimensions'][0], 'width_cm' => $data['dimensions'][1], 'height_cm' => $data['dimensions'][2],

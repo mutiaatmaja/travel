@@ -20,6 +20,12 @@ class PackageFactory extends Factory
         return [
             'package_setting_id' => PackageSettingFactory::new(),
             'customer_name' => fake()->name(),
+            'sender_name' => fake()->name(),
+            'sender_phone' => fake()->numerify('0812########'),
+            'sender_address' => fake()->address(),
+            'recipient_name' => fake()->name(),
+            'recipient_phone' => fake()->numerify('0812########'),
+            'recipient_address' => fake()->address(),
             'weight_kg' => 2,
             'length_cm' => 30,
             'width_cm' => 20,

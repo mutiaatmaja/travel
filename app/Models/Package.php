@@ -12,7 +12,7 @@ use Illuminate\Support\Str;
 
 class Package extends Model
 {
-    protected $fillable = ['package_setting_id', 'code', 'customer_name', 'weight_kg', 'length_cm', 'width_cm', 'height_cm', 'status', 'description', 'category', 'financial_category'];
+    protected $fillable = ['package_setting_id', 'code', 'customer_name', 'sender_name', 'sender_address', 'sender_phone', 'recipient_name', 'recipient_address', 'recipient_phone', 'weight_kg', 'length_cm', 'width_cm', 'height_cm', 'status', 'description', 'category', 'financial_category'];
 
     protected static function booted(): void
     {

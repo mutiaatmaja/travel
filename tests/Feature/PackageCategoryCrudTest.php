@@ -132,7 +132,7 @@ class PackageCategoryCrudTest extends TestCase
         $this->signIn();
         $setting = PackageSetting::create(['name' => 'Reguler', 'pricing_type' => 'weight']);
 
-        Livewire::test('pages::packages.index')->set('packageSettingId', $setting->id)->set('customerName', 'Pelanggan')
+        Livewire::test('pages::packages.index')->set('packageSettingId', $setting->id)->set('senderPhone', '081234567890')->set('recipientPhone', '+6281398765432')->set('senderName', 'Pengirim')->set('senderAddress', 'Alamat Pengirim')->set('recipientName', 'Penerima')->set('recipientAddress', 'Alamat Penerima')
             ->set('category', 'Cash')->set('financialCategory', 'Ongoing')->call('save')
             ->assertHasErrors(['category' => 'exists', 'financialCategory' => 'exists']);
 
@@ -146,7 +146,7 @@ class PackageCategoryCrudTest extends TestCase
         PackageCategory::factory()->create(['name' => 'Transfer', 'type' => 'financial']);
         $setting = PackageSetting::create(['name' => 'Reguler', 'pricing_type' => 'weight']);
 
-        Livewire::test('pages::packages.index')->set('packageSettingId', $setting->id)->set('customerName', 'Pelanggan')
+        Livewire::test('pages::packages.index')->set('packageSettingId', $setting->id)->set('senderPhone', '081234567890')->set('recipientPhone', '+6281398765432')->set('senderName', 'Pengirim')->set('senderAddress', 'Alamat Pengirim')->set('recipientName', 'Penerima')->set('recipientAddress', 'Alamat Penerima')
             ->set('category', 'Antar Cabang')->set('financialCategory', 'Transfer')->call('save')->assertHasNoErrors();
 
         $this->assertDatabaseHas('packages', ['category' => 'Antar Cabang', 'financial_category' => 'Transfer']);
